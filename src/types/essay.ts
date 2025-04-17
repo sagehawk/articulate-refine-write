@@ -1,4 +1,3 @@
-
 export interface Essay {
   id: string;
   title: string;
@@ -57,6 +56,12 @@ export interface Step7Data {
 export interface Step8Data {
   newOutlineSentences: string[];
   newParagraphs: string[];
+  editHistory?: {
+    paragraphIndex: number;
+    originalSentence: string;
+    newSentence: string;
+    timestamp: number;
+  }[];
 }
 
 export interface Step9Data {
