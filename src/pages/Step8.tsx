@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { AlertCircle, ArrowDown, ArrowUp, Eye, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RefactoringTools } from "@/components/essay/RefactoringTools";
 
 const Step8 = () => {
   const [originalParagraphs, setOriginalParagraphs] = useState<string[]>([]);
@@ -20,6 +21,13 @@ const Step8 = () => {
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [viewingDraft, setViewingDraft] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("outline");
+  const [editHistory, setEditHistory] = useState<{
+    paragraphIndex: number;
+    originalSentence: string;
+    newSentence: string;
+    timestamp: number;
+  }[]>([]);
+  const [showRefactoring, setShowRefactoring] = useState(false);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -53,6 +61,10 @@ const Step8 = () => {
           if (data.step8.newParagraphs) {
             setNewParagraphs(data.step8.newParagraphs);
           }
+
+          if (data.step8.editHistory) {
+            setEditHistory(data.step8.editHistory);
+          }
         } else {
           // Initialize newParagraphs as empty array matching the expected length
           setNewParagraphs([]);
@@ -81,7 +93,7 @@ const Step8 = () => {
     setViewingDraft(!viewingDraft);
   };
 
-  // Fixed: This function now doesn't update state directly, but returns new paragraph if needed
+  // This function now doesn't update state directly, but returns new paragraph if needed
   const getOrCreateParagraph = (index: number) => {
     if (!newParagraphs[index]) {
       return "";
@@ -114,6 +126,14 @@ const Step8 = () => {
     setNewParagraphs(updatedParagraphs);
   };
 
+  const handleRefactoringParagraphsChange = (updatedParagraphs: string[]) => {
+    setNewParagraphs(updatedParagraphs);
+  };
+
+  const handleEditHistoryChange = (history: any[]) => {
+    setEditHistory(history);
+  };
+
   const handleGenerateOutlineClick = () => {
     setActiveTab("restructure");
     
@@ -129,7 +149,8 @@ const Step8 = () => {
       
       data.step8 = {
         newOutlineSentences: filteredOutline,
-        newParagraphs: newParagraphs
+        newParagraphs: newParagraphs,
+        editHistory: editHistory
       };
       
       saveEssayData(data);
@@ -188,6 +209,9 @@ const Step8 = () => {
           <TabsList>
             <TabsTrigger value="outline">1. Create New Outline</TabsTrigger>
             <TabsTrigger value="restructure">2. Restructure Essay</TabsTrigger>
+            {showRefactoring || newParagraphs.length > 0 ? (
+              <TabsTrigger value="refine">3. Refine & Polish</TabsTrigger>
+            ) : null}
           </TabsList>
 
           <TabsContent value="outline" className="space-y-6">
@@ -283,6 +307,18 @@ const Step8 = () => {
                     <Eye className="h-4 w-4" />
                     <span>{viewingDraft ? "Hide Draft" : "View Original Draft"}</span>
                   </Button>
+
+                  {newParagraphs.some(p => p.trim()) && (
+                    <Button 
+                      variant="default" 
+                      onClick={() => {
+                        setShowRefactoring(true);
+                        setActiveTab("refine");
+                      }}
+                    >
+                      Proceed to Refine & Polish
+                    </Button>
+                  )}
                 </div>
 
                 {viewingDraft && (
@@ -323,6 +359,39 @@ const Step8 = () => {
                       );
                     })}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="refine" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Refine & Polish Your Essay</CardTitle>
+                <CardDescription>
+                  Fine-tune sentences and paragraph order for maximum clarity and impact.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {newParagraphs.length > 0 ? (
+                  <RefactoringTools 
+                    paragraphs={newParagraphs}
+                    onParagraphsChange={handleRefactoringParagraphsChange}
+                    initialEditHistory={editHistory}
+                    onEditHistoryChange={handleEditHistoryChange}
+                  />
+                ) : (
+                  <div className="p-6 text-center">
+                    <p className="text-slate-600">
+                      You need to write paragraphs in the "Restructure Essay" tab before refining them.
+                    </p>
+                    <Button 
+                      className="mt-4"
+                      onClick={() => setActiveTab("restructure")}
+                    >
+                      Go to Restructure
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { NoteSidebar } from "@/components/layout/NoteSidebar";
 
 interface StepLayoutProps {
   children: ReactNode;
@@ -132,6 +133,9 @@ export function StepLayout({
           {children}
         </div>
       </main>
+
+      {/* Add the sidebar component */}
+      <NoteSidebar essayData={essayData} />
 
       {/* Footer with navigation */}
       <footer className="bg-white shadow-sm py-4 px-6 mt-auto">
