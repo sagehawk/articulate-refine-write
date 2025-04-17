@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step8Data } from "@/types/essay";
@@ -80,13 +81,32 @@ const Step8 = () => {
     setViewingDraft(!viewingDraft);
   };
 
-  const createNewParagraph = (outline: string, index: number) => {
-    if (!outline.trim()) return;
-    
-    const updatedParagraphs = [...newParagraphs];
-    updatedParagraphs[index] = updatedParagraphs[index] || "";
-    setNewParagraphs(updatedParagraphs);
+  // Fixed: This function now doesn't update state directly, but returns new paragraph if needed
+  const getOrCreateParagraph = (index: number) => {
+    if (!newParagraphs[index]) {
+      return "";
+    }
+    return newParagraphs[index];
   };
+
+  // Create a separate useEffect to initialize paragraphs when switching to restructure tab
+  useEffect(() => {
+    if (activeTab === "restructure") {
+      const filledOutlines = newOutlineSentences.filter(s => s.trim());
+      
+      if (filledOutlines.length > 0 && newParagraphs.length < filledOutlines.length) {
+        // Only update if we need to add more paragraphs
+        const initialParagraphs = [...newParagraphs];
+        
+        // Add empty paragraphs for any missing outline points
+        while (initialParagraphs.length < filledOutlines.length) {
+          initialParagraphs.push("");
+        }
+        
+        setNewParagraphs(initialParagraphs);
+      }
+    }
+  }, [activeTab, newOutlineSentences, newParagraphs]);
 
   const handleParagraphChange = (index: number, value: string) => {
     const updatedParagraphs = [...newParagraphs];
@@ -96,11 +116,6 @@ const Step8 = () => {
 
   const handleGenerateOutlineClick = () => {
     setActiveTab("restructure");
-    
-    // Create empty paragraphs for each non-empty outline sentence
-    const filledOutlines = newOutlineSentences.filter(s => s.trim());
-    const initialParagraphs = Array(filledOutlines.length).fill("");
-    setNewParagraphs(initialParagraphs);
     
     toast("Ready to restructure", {
       description: "Your new outline has been prepared. Now you can write paragraphs for each point.",
@@ -283,10 +298,8 @@ const Step8 = () => {
                   {newOutlineSentences
                     .filter(sentence => sentence.trim())
                     .map((sentence, index) => {
-                      // Create paragraph when user clicks on the outline point
-                      if (!newParagraphs[index]) {
-                        createNewParagraph(sentence, index);
-                      }
+                      // Get the paragraph value, or an empty string if it doesn't exist yet
+                      const paragraphValue = getOrCreateParagraph(index);
                       
                       return (
                         <div key={index} className="border border-slate-200 rounded-md p-4 bg-white">
@@ -300,7 +313,7 @@ const Step8 = () => {
                           <div>
                             <h3 className="font-medium text-slate-800 mb-2">New Paragraph</h3>
                             <Textarea
-                              value={newParagraphs[index] || ""}
+                              value={paragraphValue}
                               onChange={(e) => handleParagraphChange(index, e.target.value)}
                               placeholder="Write your new paragraph based on this outline point..."
                               className="min-h-[200px]"
