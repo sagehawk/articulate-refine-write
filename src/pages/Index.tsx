@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EssayList } from "@/components/EssayList";
 import { getDraftEssays, getCompletedEssays, createNewEssay, clearActiveEssay } from "@/utils/localStorage";
-import { FilePlus, BookOpen } from "lucide-react";
+import { FilePlus, BookOpen, Pencil, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -56,20 +57,77 @@ const Index = () => {
       
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-6">
-        <div className="mb-10">
-          <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-2">Welcome to Articulate & Refine</h2>
-          <p className="text-slate-600 mb-4 max-w-3xl">
-            An interactive guide to writing powerful essays based on Jordan B. Peterson's Essay Writing Guide. 
-            Work through a structured process to articulate your ideas clearly and refine your writing.
-          </p>
-          
-          <Button 
-            onClick={handleStartNewEssay} 
-            className="font-medium space-x-2"
-          >
-            <FilePlus className="w-5 h-5" />
-            <span>Start New Essay</span>
-          </Button>
+        <div className="grid md:grid-cols-2 gap-8 mb-10">
+          <Card className="bg-gradient-to-br from-blue-50 to-slate-50 border-blue-100">
+            <CardHeader>
+              <CardTitle className="text-blue-800">Write Better Essays</CardTitle>
+              <CardDescription className="text-blue-700">
+                Follow Jordan B. Peterson's step-by-step method
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-600 mb-6">
+                This interactive guide will walk you through a structured process to articulate your ideas 
+                clearly and refine your writing through multiple drafts.
+              </p>
+              <Button 
+                onClick={handleStartNewEssay} 
+                className="font-medium space-x-2 w-full sm:w-auto"
+              >
+                <FilePlus className="w-5 h-5" />
+                <span>Start New Essay</span>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Peterson's Method</CardTitle>
+              <CardDescription>
+                A nine-step approach to essay writing
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">1</span>
+                  <span>Introduction & Setup</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">2</span>
+                  <span>Levels of Resolution</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">3</span>
+                  <span>Topic & Reading List</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">4</span>
+                  <span>Outline Creation</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">5</span>
+                  <span>Paragraph Drafting</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">6</span>
+                  <span>Sentence Editing & Refinement</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">7</span>
+                  <span>Paragraph Reordering</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">8</span>
+                  <span>Generate New Outline & Restructure</span>
+                </li>
+                <li className="flex items-center text-sm">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-xs font-bold mr-2">9</span>
+                  <span>References & Formatting</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
         
         <EssayList
