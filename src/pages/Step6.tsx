@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, RefreshCw, Wand2 } from "lucide-react";
+import { Check, RefreshCw, Trash2, Wand2, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 
 const Step6 = () => {
@@ -115,7 +115,89 @@ const Step6 = () => {
     // Show success message
     toast("Sentence updated", {
       description: "Your edited sentence has been applied to the paragraph.",
-      duration: 3000,
+    });
+  };
+
+  const handleSentenceDelete = () => {
+    if (selectedSentenceIndex === -1) return;
+    
+    // Record deletion in edit history
+    const newHistoryEntry = {
+      paragraphIndex: activeParagraphIndex,
+      originalSentence: selectedSentence,
+      newSentence: "", // Empty string indicates deletion
+      timestamp: Date.now()
+    };
+    
+    const newEditHistory = [...editHistory, newHistoryEntry];
+    setEditHistory(newEditHistory);
+    
+    // Remove the sentence
+    const newSentences = [...sentencesInParagraph];
+    newSentences.splice(selectedSentenceIndex, 1);
+    
+    // If no sentences left, create an empty paragraph
+    const updatedParagraphText = newSentences.length > 0 
+      ? newSentences.join(" ") 
+      : "";
+    
+    // Update paragraphs array
+    const newParagraphs = [...paragraphs];
+    newParagraphs[activeParagraphIndex] = updatedParagraphText;
+    setParagraphs(newParagraphs);
+    
+    // Refresh the sentences display
+    setSentencesInParagraph(newSentences);
+    
+    // Clear selection
+    setSelectedSentence("");
+    setSelectedSentenceIndex(-1);
+    setEditedSentence("");
+    
+    // Show success message
+    toast("Sentence deleted", {
+      description: "The selected sentence has been removed from the paragraph.",
+    });
+  };
+
+  const handleSentenceMove = (direction: 'up' | 'down') => {
+    if (selectedSentenceIndex === -1) return;
+    if (direction === 'up' && selectedSentenceIndex === 0) return;
+    if (direction === 'down' && selectedSentenceIndex === sentencesInParagraph.length - 1) return;
+    
+    const newSentences = [...sentencesInParagraph];
+    const newIndex = direction === 'up' ? selectedSentenceIndex - 1 : selectedSentenceIndex + 1;
+    
+    // Swap the sentences
+    [newSentences[selectedSentenceIndex], newSentences[newIndex]] = 
+      [newSentences[newIndex], newSentences[selectedSentenceIndex]];
+    
+    // Join sentences back into paragraph
+    const updatedParagraphText = newSentences.join(" ");
+    
+    // Update paragraphs array
+    const newParagraphs = [...paragraphs];
+    newParagraphs[activeParagraphIndex] = updatedParagraphText;
+    setParagraphs(newParagraphs);
+    
+    // Refresh the sentences display and update selection
+    setSentencesInParagraph(newSentences);
+    setSelectedSentence(newSentences[newIndex]);
+    setSelectedSentenceIndex(newIndex);
+    setEditedSentence(newSentences[newIndex]);
+    
+    // Record movement in history
+    const newHistoryEntry = {
+      paragraphIndex: activeParagraphIndex,
+      originalSentence: `Sentence moved ${direction}`,
+      newSentence: selectedSentence,
+      timestamp: Date.now()
+    };
+    
+    setEditHistory([...editHistory, newHistoryEntry]);
+    
+    toast(`Sentence moved ${direction}`, {
+      description: "The sentence order has been updated.",
     });
   };
 
@@ -124,7 +206,6 @@ const Step6 = () => {
     // For now, just show a toast
     toast("AI Assistance", {
       description: "AI suggestions would appear here. This feature will be implemented in a future update.",
-      duration: 3000,
     });
   };
 
@@ -160,12 +241,12 @@ const Step6 = () => {
       onSave={handleSave}
       canProceed={canProceed}
     >
-      <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-6">
+      <h2 className="text-2xl font-nunito font-bold text-green-800 mb-6">
         Sentence Editing & Refinement
       </h2>
 
-      <Card className="mb-8">
-        <CardHeader>
+      <Card className="mb-8 border-green-100">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-lg">
           <CardTitle>Refine Your Writing at the Sentence Level</CardTitle>
           <CardDescription>
             Polish each sentence for clarity, conciseness, and impact.
@@ -180,7 +261,7 @@ const Step6 = () => {
           
           <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden mb-2">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -212,12 +293,12 @@ const Step6 = () => {
             handleParagraphSelect(index);
           }}
         >
-          <TabsList className="mb-4 flex flex-wrap h-auto pb-1 gap-1">
+          <TabsList className="mb-4 flex flex-wrap h-auto pb-1 gap-1 bg-green-50">
             {paragraphs.map((_, index) => (
               <TabsTrigger 
                 key={index} 
                 value={`paragraph-${index}`}
-                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
               >
                 Paragraph {index + 1}
               </TabsTrigger>
@@ -226,7 +307,7 @@ const Step6 = () => {
           
           {paragraphs.map((paragraph, pIndex) => (
             <TabsContent key={pIndex} value={`paragraph-${pIndex}`} className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-md border border-slate-200 mb-4">
+              <div className="bg-slate-50 p-4 rounded-md border border-green-100 mb-4">
                 <h3 className="font-medium text-slate-700 mb-2">Current Paragraph</h3>
                 <div>
                   {sentencesInParagraph.map((sentence, sIndex) => (
@@ -235,7 +316,7 @@ const Step6 = () => {
                       onClick={() => handleSentenceSelect(sentence, sIndex)}
                       className={`inline cursor-pointer ${
                         selectedSentenceIndex === sIndex 
-                          ? 'bg-blue-100 border-b-2 border-blue-400' 
+                          ? 'bg-green-100 border-b-2 border-green-400' 
                           : 'hover:bg-slate-100'
                       } px-1 py-0.5 rounded`}
                     >
@@ -246,10 +327,10 @@ const Step6 = () => {
               </div>
               
               {selectedSentenceIndex !== -1 && (
-                <div className="bg-white p-4 rounded-md border border-slate-200">
+                <div className="bg-white p-4 rounded-md border border-green-100 shadow-sm">
                   <div className="mb-4">
                     <h3 className="font-medium text-slate-700 mb-2">Original Sentence</h3>
-                    <p className="text-slate-600 italic bg-slate-50 p-2 rounded">
+                    <p className="text-slate-600 italic bg-slate-50 p-2 rounded border-l-2 border-green-300">
                       {selectedSentence}
                     </p>
                   </div>
@@ -260,18 +341,46 @@ const Step6 = () => {
                       value={editedSentence}
                       onChange={(e) => handleSentenceEdit(e.target.value)}
                       placeholder="Rewrite the sentence here..."
-                      className="min-h-[100px]"
+                      className="min-h-[100px] border-green-100 focus-visible:ring-green-400"
                     />
                   </div>
                   
-                  <div className="flex space-x-2">
-                    <Button onClick={applyEditedSentence} className="space-x-1">
+                  <div className="flex flex-wrap gap-2">
+                    <Button onClick={applyEditedSentence} className="space-x-1 bg-green-600 hover:bg-green-700">
                       <Check className="w-4 h-4" />
                       <span>Apply Edit</span>
                     </Button>
-                    <Button variant="outline" onClick={handleAIAssist} className="space-x-1">
+                    <Button 
+                      variant="outline" 
+                      onClick={handleAIAssist} 
+                      className="space-x-1 border-green-200 hover:bg-green-50"
+                    >
                       <Wand2 className="w-4 h-4" />
                       <span>Get AI Suggestions</span>
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleSentenceMove('up')}
+                      disabled={selectedSentenceIndex === 0}
+                      className="border-green-200 hover:bg-green-50"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleSentenceMove('down')}
+                      disabled={selectedSentenceIndex === sentencesInParagraph.length - 1}
+                      className="border-green-200 hover:bg-green-50"
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleSentenceDelete}
+                      className="space-x-1 border-red-200 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Delete</span>
                     </Button>
                   </div>
                 </div>
@@ -280,7 +389,7 @@ const Step6 = () => {
               {editHistory.filter(edit => edit.paragraphIndex === pIndex).length > 0 && (
                 <div className="mt-6">
                   <h3 className="font-medium text-slate-700 mb-2">Edit History</h3>
-                  <div className="bg-white rounded-md border border-slate-200 divide-y divide-slate-100">
+                  <div className="bg-white rounded-md border border-green-100 divide-y divide-green-50">
                     {editHistory
                       .filter(edit => edit.paragraphIndex === pIndex)
                       .map((edit, index) => (
@@ -294,7 +403,11 @@ const Step6 = () => {
                               <span className="text-red-500 line-through">{edit.originalSentence}</span>
                             </div>
                             <div className="text-sm">
-                              <span className="text-green-600">{edit.newSentence}</span>
+                              {edit.newSentence ? (
+                                <span className="text-green-600">{edit.newSentence}</span>
+                              ) : (
+                                <span className="text-orange-500 italic">(Sentence deleted)</span>
+                              )}
                             </div>
                           </div>
                         </div>

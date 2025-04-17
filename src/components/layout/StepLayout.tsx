@@ -2,10 +2,11 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState } from "react";
-import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep } from "@/utils/localStorage";
+import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep, completeEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
 import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
+import { toast } from "sonner";
 
 interface StepLayoutProps {
   children: ReactNode;
@@ -100,17 +101,19 @@ export function StepLayout({
     } else {
       // On the last step, mark as complete and go to homepage
       if (essayData) {
-        essayData.essay.isCompleted = true;
-        saveEssayData(essayData);
+        completeEssay(essayData.essay.id);
+        toast("Essay Completed!", {
+          description: "Your essay has been marked as complete.",
+        });
+        navigate("/");
       }
-      navigate("/");
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-green-50">
       {/* Header */}
-      <header className="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
+      <header className="bg-white shadow-sm border-b border-green-100 py-4 px-6 flex items-center justify-between">
         <h1 className="text-2xl font-nunito font-bold text-slate-800">
           {essayData?.essay.title || "Essay"}
         </h1>
@@ -120,7 +123,7 @@ export function StepLayout({
           </div>
           <div className="h-2 w-56 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full"
+              className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
@@ -129,7 +132,7 @@ export function StepLayout({
 
       {/* Main content */}
       <main className="flex-grow p-6 md:p-8 max-w-5xl mx-auto w-full">
-        <div className="bg-white rounded-lg shadow p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-md border border-green-50 p-6 md:p-8">
           {children}
         </div>
       </main>
@@ -138,9 +141,9 @@ export function StepLayout({
       <NoteSidebar essayData={essayData} />
 
       {/* Footer with navigation */}
-      <footer className="bg-white shadow-sm py-4 px-6 mt-auto">
+      <footer className="bg-white shadow-sm border-t border-green-100 py-4 px-6 mt-auto">
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
-          <Button variant="outline" onClick={goBack} className="space-x-1">
+          <Button variant="outline" onClick={goBack} className="space-x-1 border-green-200 hover:bg-green-50">
             <ArrowLeft className="w-4 h-4" />
             <span>{step > 1 ? "Previous" : "Exit"}</span>
           </Button>
@@ -149,7 +152,7 @@ export function StepLayout({
             variant="secondary" 
             onClick={handleSave} 
             disabled={isSaving}
-            className="space-x-1"
+            className="space-x-1 bg-green-100 hover:bg-green-200 text-green-800"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? "Saving..." : "Save"}</span>
@@ -158,7 +161,7 @@ export function StepLayout({
           <Button 
             onClick={goNext} 
             disabled={!canProceed}
-            className="space-x-1"
+            className="space-x-1 bg-green-600 hover:bg-green-700"
           >
             <span>{step < totalSteps ? "Next" : "Complete"}</span>
             <ArrowRight className="w-4 h-4" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step9Data } from "@/types/essay";
@@ -10,8 +11,10 @@ import { toast } from "sonner";
 import { AlertCircle, Check, Download, Eye, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
 
 const Step9 = () => {
+  const navigate = useNavigate();
   const [bibliography, setBibliography] = useState<string>("");
   const [formattingChecks, setFormattingChecks] = useState({
     doubleSpaced: false,
@@ -91,6 +94,7 @@ const Step9 = () => {
       toast("Essay Completed!", {
         description: "Your essay has been marked as complete.",
       });
+      navigate("/");
     }
   };
 
@@ -117,12 +121,12 @@ const Step9 = () => {
       onSave={handleSave}
       canProceed={canProceed}
     >
-      <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-6">
+      <h2 className="text-2xl font-nunito font-bold text-green-800 mb-6">
         References & Formatting
       </h2>
 
-      <Card className="mb-8">
-        <CardHeader>
+      <Card className="mb-8 border-green-100">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-lg">
           <CardTitle>Finalize Your Essay</CardTitle>
           <CardDescription>
             Add citations, check formatting, and prepare for submission.
@@ -139,7 +143,7 @@ const Step9 = () => {
             <Button 
               onClick={exportEssay} 
               variant="outline"
-              className="space-x-1"
+              className="space-x-1 border-green-200 hover:bg-green-50"
             >
               <Download className="h-4 w-4" />
               <span>Export as Text</span>
@@ -147,7 +151,7 @@ const Step9 = () => {
             
             <Button
               onClick={handleCompleteEssay}
-              className="space-x-1"
+              className="space-x-1 bg-green-600 hover:bg-green-700"
             >
               <Check className="h-4 w-4" />
               <span>Mark as Complete</span>
@@ -158,14 +162,14 @@ const Step9 = () => {
 
       {finalEssay ? (
         <Tabs defaultValue="bibliography" className="w-full space-y-6">
-          <TabsList>
-            <TabsTrigger value="bibliography">Bibliography</TabsTrigger>
-            <TabsTrigger value="formatting">Formatting Checklist</TabsTrigger>
-            <TabsTrigger value="preview">Preview Essay</TabsTrigger>
+          <TabsList className="bg-green-50">
+            <TabsTrigger value="bibliography" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Bibliography</TabsTrigger>
+            <TabsTrigger value="formatting" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Formatting Checklist</TabsTrigger>
+            <TabsTrigger value="preview" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Preview Essay</TabsTrigger>
           </TabsList>
           
           <TabsContent value="bibliography" className="space-y-6">
-            <Card>
+            <Card className="border-green-100">
               <CardHeader>
                 <CardTitle>Bibliography / References</CardTitle>
                 <CardDescription>
@@ -180,7 +184,7 @@ const Step9 = () => {
                       href="https://owl.purdue.edu/owl/research_and_citation/resources.html" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                      className="text-sm text-green-600 hover:text-green-800 flex items-center gap-1"
                     >
                       <ExternalLink className="h-3 w-3" />
                       <span>Citation Style Guides</span>
@@ -191,7 +195,7 @@ const Step9 = () => {
                     value={bibliography}
                     onChange={(e) => handleBibliographyChange(e.target.value)}
                     placeholder="Enter your bibliography/references here..."
-                    className="min-h-[300px] font-mono text-sm"
+                    className="min-h-[300px] font-mono text-sm border-green-100 focus-visible:ring-green-400"
                   />
                   
                   <p className="text-xs text-slate-500 mt-2">
@@ -203,7 +207,7 @@ const Step9 = () => {
           </TabsContent>
           
           <TabsContent value="formatting" className="space-y-6">
-            <Card>
+            <Card className="border-green-100">
               <CardHeader>
                 <CardTitle>Formatting Checklist</CardTitle>
                 <CardDescription>
@@ -217,6 +221,7 @@ const Step9 = () => {
                       id="doubleSpaced" 
                       checked={formattingChecks.doubleSpaced}
                       onCheckedChange={() => toggleFormattingCheck("doubleSpaced")}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                     />
                     <div className="grid gap-1.5 leading-none">
                       <label
@@ -236,6 +241,7 @@ const Step9 = () => {
                       id="titlePage" 
                       checked={formattingChecks.titlePage}
                       onCheckedChange={() => toggleFormattingCheck("titlePage")}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                     />
                     <div className="grid gap-1.5 leading-none">
                       <label
@@ -255,6 +261,7 @@ const Step9 = () => {
                       id="citationsChecked" 
                       checked={formattingChecks.citationsChecked}
                       onCheckedChange={() => toggleFormattingCheck("citationsChecked")}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                     />
                     <div className="grid gap-1.5 leading-none">
                       <label
@@ -274,7 +281,7 @@ const Step9 = () => {
           </TabsContent>
           
           <TabsContent value="preview" className="space-y-6">
-            <Card>
+            <Card className="border-green-100">
               <CardHeader>
                 <CardTitle>Essay Preview</CardTitle>
                 <CardDescription>
