@@ -24,8 +24,9 @@ const Index = () => {
   };
   
   const handleStartNewEssay = () => {
-    // This will redirect to Step 1 where the user will input the title
-    clearActiveEssay();
+    // Clear any active essay and navigate to Step 1
+    // We need to create a new essay first, then navigate
+    const newEssay = createNewEssay("Untitled Essay");
     navigate("/step1");
   };
 
