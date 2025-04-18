@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EssayData, Step1Data } from "@/types/essay";
@@ -49,11 +47,7 @@ const Step1 = () => {
     
     // Update the step data
     if (data) {
-      data.step1 = {
-        goal,
-        workspace,
-        timeManagement
-      };
+      data.step1 = {};
       
       // Update title if changed
       if (data.essay.title !== title && title.trim()) {
@@ -112,43 +106,6 @@ const Step1 = () => {
             </p>
           </CardContent>
         </Card>
-        
-        <div>
-          <Label htmlFor="writing-goal" className="text-base">My Writing Goal</Label>
-          <div className="mt-1.5">
-            <Textarea
-              id="writing-goal"
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              placeholder="What do I hope to accomplish with this essay? What am I trying to express or understand?"
-              className="min-h-[100px]"
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="workspace" className="text-base">Workspace Considerations</Label>
-          <div className="mt-1.5">
-            <Textarea
-              id="workspace"
-              value={workspace}
-              onChange={(e) => setWorkspace(e.target.value)}
-              placeholder="Notes about your writing environment, tools, etc."
-            />
-          </div>
-        </div>
-        
-        <div>
-          <Label htmlFor="time-management" className="text-base">Time Management</Label>
-          <div className="mt-1.5">
-            <Textarea
-              id="time-management"
-              value={timeManagement}
-              onChange={(e) => setTimeManagement(e.target.value)}
-              placeholder="How will you schedule time to work on this essay?"
-            />
-          </div>
-        </div>
       </div>
     </StepLayout>
   );

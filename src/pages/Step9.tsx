@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step9Data } from "@/types/essay";
@@ -88,9 +87,10 @@ const Step9 = () => {
     });
   };
 
-  const handleCompleteEssay = () => {
-    if (essayData) {
-      completeEssay(essayData.essay.id);
+  const handleComplete = () => {
+    const activeEssayId = getActiveEssay();
+    if (activeEssayId) {
+      completeEssay(activeEssayId);
       toast("Essay Completed!", {
         description: "Your essay has been marked as complete.",
       });
@@ -119,7 +119,8 @@ const Step9 = () => {
       step={9} 
       totalSteps={9}
       onSave={handleSave}
-      canProceed={canProceed}
+      canProceed={true}
+      onComplete={handleComplete}
     >
       <h2 className="text-2xl font-nunito font-bold text-green-800 mb-6">
         References & Formatting
@@ -150,7 +151,7 @@ const Step9 = () => {
             </Button>
             
             <Button
-              onClick={handleCompleteEssay}
+              onClick={handleComplete}
               className="space-x-1 bg-green-600 hover:bg-green-700"
             >
               <Check className="h-4 w-4" />

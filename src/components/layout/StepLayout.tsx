@@ -14,6 +14,7 @@ interface StepLayoutProps {
   totalSteps: number;
   onSave?: (essayData: EssayData) => void;
   canProceed?: boolean;
+  onComplete?: () => void;
 }
 
 export function StepLayout({
@@ -22,6 +23,7 @@ export function StepLayout({
   totalSteps,
   onSave,
   canProceed = true,
+  onComplete,
 }: StepLayoutProps) {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
@@ -99,8 +101,11 @@ export function StepLayout({
     if (step < totalSteps) {
       goToStep(step + 1);
     } else {
-      // On the last step, mark as complete and go to homepage
-      if (essayData) {
+      // On the last step, call onComplete if provided
+      if (onComplete) {
+        onComplete();
+      } else if (essayData) {
+        // Default completion behavior
         completeEssay(essayData.essay.id);
         toast("Essay Completed!", {
           description: "Your essay has been marked as complete.",
