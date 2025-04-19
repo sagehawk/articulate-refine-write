@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, RefreshCw, Trash2, Wand2, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { getAISuggestions } from "@/utils/aiSuggestions";
+import { AISuggestionsModal } from "@/components/essay/AISuggestionsModal";
 
 const Step6 = () => {
   const [paragraphs, setParagraphs] = useState<string[]>([]);
@@ -24,6 +26,10 @@ const Step6 = () => {
     timestamp: number;
   }[]>([]);
 
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  
   useEffect(() => {
     const activeEssayId = getActiveEssay();
     
@@ -176,10 +182,24 @@ const Step6 = () => {
     });
   };
 
-  const handleAIAssist = () => {
-    toast("AI Assistance", {
-      description: "AI suggestions would appear here. This feature will be implemented in a future update.",
-    });
+  const handleAISuggestions = async () => {
+    if (!selectedSentence) return;
+
+    setIsLoadingSuggestions(true);
+    setIsAIModalOpen(true);
+    setAiSuggestions([]);
+
+    try {
+      const suggestions = await getAISuggestions(selectedSentence);
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      toast.error("Failed to get AI suggestions", {
+        description: error instanceof Error ? error.message : "Please try again later",
+      });
+      setIsAIModalOpen(false);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
   };
 
   const handleSave = (data: EssayData) => {
@@ -321,7 +341,7 @@ const Step6 = () => {
                     </Button>
                     <Button 
                       variant="outline" 
-                      onClick={handleAIAssist} 
+                      onClick={handleAISuggestions}
                       className="space-x-1 border-blue-200 hover:bg-blue-50"
                     >
                       <Wand2 className="w-4 h-4" />
@@ -388,6 +408,15 @@ const Step6 = () => {
           ))}
         </Tabs>
       )}
+
+      <AISuggestionsModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        originalSentence={selectedSentence}
+        onSelectSuggestion={handleSentenceEdit} // Or however you want to apply the suggestion
+        suggestions={aiSuggestions}
+        isLoading={isLoadingSuggestions}
+      />
     </StepLayout>
   );
 };
