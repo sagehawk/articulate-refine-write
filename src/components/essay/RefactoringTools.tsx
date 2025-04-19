@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowDown, ArrowUp, Check, GripVertical, RefreshCw, Wand2 } from "lucide-react";
 import { toast } from "sonner";
+import { getAISuggestions } from "@/utils/aiSuggestions";
+import { AISuggestionsModal } from "./AISuggestionsModal";
 
 interface RefactoringToolsProps {
   paragraphs: string[];
@@ -38,23 +39,21 @@ export function RefactoringTools({
     newSentence: string;
     timestamp: number;
   }[]>(initialEditHistory);
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
-  // Initialize paragraph order when paragraphs change
   useEffect(() => {
     if (paragraphs.length) {
-      // Initialize with sequential order
       const initialOrder = Array.from({ length: paragraphs.length }, (_, i) => i);
       setParagraphOrder(initialOrder);
       
-      // Initialize the first paragraph for sentence editing
       setActiveParagraphIndex(0);
       splitParagraphIntoSentences(paragraphs[0], 0);
     }
   }, []);
 
-  // Function to split paragraph text into sentences
   const splitParagraphIntoSentences = (paragraphText: string, paragraphIndex: number) => {
-    // Basic sentence splitting (this could be improved with a more sophisticated regex)
     const sentences = paragraphText
       .split(/(?<=[.!?])\s+/)
       .filter(sentence => sentence.trim().length > 0);
@@ -83,7 +82,6 @@ export function RefactoringTools({
   const applyEditedSentence = () => {
     if (selectedSentenceIndex === -1 || !editedSentence.trim()) return;
     
-    // Record edit in history
     const newHistoryEntry = {
       paragraphIndex: paragraphOrder[activeParagraphIndex],
       originalSentence: selectedSentence,
@@ -98,27 +96,21 @@ export function RefactoringTools({
       onEditHistoryChange(newEditHistory);
     }
     
-    // Update the paragraph with the edited sentence
     const newSentences = [...sentencesInParagraph];
     newSentences[selectedSentenceIndex] = editedSentence;
     
-    // Join sentences back into paragraph
     const updatedParagraphText = newSentences.join(" ");
     
-    // Update paragraphs array
     const newParagraphs = [...paragraphs];
     newParagraphs[paragraphOrder[activeParagraphIndex]] = updatedParagraphText;
     onParagraphsChange(newParagraphs);
     
-    // Refresh the sentences display
     setSentencesInParagraph(newSentences);
     
-    // Clear selection
     setSelectedSentence("");
     setSelectedSentenceIndex(-1);
     setEditedSentence("");
     
-    // Show success message
     toast("Sentence updated", {
       description: "Your edited sentence has been applied to the paragraph.",
     });
@@ -141,11 +133,9 @@ export function RefactoringTools({
   };
 
   const applyReordering = () => {
-    // Create a new array of paragraphs in the new order
     const reorderedParagraphs = paragraphOrder.map(index => paragraphs[index]);
     onParagraphsChange(reorderedParagraphs);
     
-    // Reset the paragraph order to sequential
     const initialOrder = Array.from({ length: reorderedParagraphs.length }, (_, i) => i);
     setParagraphOrder(initialOrder);
     
@@ -154,11 +144,30 @@ export function RefactoringTools({
     });
   };
 
-  // Get a brief preview of each paragraph (first 100 characters)
   const getParagraphPreview = (paragraph: string) => {
     if (!paragraph) return "Empty paragraph";
     const preview = paragraph.substring(0, 100);
     return preview + (paragraph.length > 100 ? "..." : "");
+  };
+
+  const handleAISuggestions = async () => {
+    if (!selectedSentence) return;
+
+    setIsLoadingSuggestions(true);
+    setIsAIModalOpen(true);
+    setAiSuggestions([]);
+
+    try {
+      const suggestions = await getAISuggestions(selectedSentence);
+      setAiSuggestions(suggestions);
+    } catch (error) {
+      toast.error("Failed to get AI suggestions", {
+        description: error instanceof Error ? error.message : "Please try again later",
+      });
+      setIsAIModalOpen(false);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
   };
 
   return (
@@ -243,7 +252,7 @@ export function RefactoringTools({
                           <Check className="w-4 h-4" />
                           <span>Apply Edit</span>
                         </Button>
-                        <Button variant="outline" className="space-x-1">
+                        <Button variant="outline" onClick={handleAISuggestions} className="space-x-1 border-blue-200 hover:bg-blue-50" disabled={!selectedSentence}>
                           <Wand2 className="w-4 h-4" />
                           <span>Get AI Suggestions</span>
                         </Button>
@@ -342,6 +351,15 @@ export function RefactoringTools({
           </CardContent>
         </Card>
       </TabsContent>
+      
+      <AISuggestionsModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        originalSentence={selectedSentence}
+        onSelectSuggestion={handleSentenceEdit}
+        suggestions={aiSuggestions}
+        isLoading={isLoadingSuggestions}
+      />
     </Tabs>
   );
 }
