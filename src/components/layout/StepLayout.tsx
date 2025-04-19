@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState } from "react";
 import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep, completeEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
-import { ArrowLeft, ArrowRight, Save, X, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -116,6 +116,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   };
 
   const handleExitConfirm = () => {
+    navigate("/");
+  };
+
+  const handleExitWithSave = () => {
     handleSave();
     navigate("/");
   };
@@ -221,35 +225,15 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             <span>{getPreviousButtonText()}</span>
           </Button>
           
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleExit}
-              className="space-x-1 border-red-200 text-red-600 hover:bg-red-50"
-            >
-              <X className="w-4 h-4" />
-              <span>Exit Without Saving</span>
-            </Button>
-            
-            <Button 
-              onClick={handleDiscard}
-              variant="outline"
-              className="space-x-1 border-orange-200 text-orange-600 hover:bg-orange-50"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Discard Changes</span>
-            </Button>
-            
-            <Button 
-              variant="secondary" 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? "Saving..." : "Save"}</span>
-            </Button>
-          </div>
+          <Button 
+            variant="secondary" 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Save className="w-4 h-4" />
+            <span>{isSaving ? "Saving..." : "Save"}</span>
+          </Button>
           
           <Button 
             onClick={goNext} 
@@ -265,15 +249,15 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Exit essay editing?</AlertDialogTitle>
+            <AlertDialogTitle>Save changes before exiting?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to exit? Your progress will be saved automatically.
+              Do you want to save your changes before exiting?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExitConfirm}>
-              Save & Exit
+            <AlertDialogCancel onClick={handleExitConfirm}>No, Exit</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExitWithSave}>
+              Yes, Save & Exit
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

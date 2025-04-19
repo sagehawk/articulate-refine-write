@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step8Data } from "@/types/essay";
@@ -234,7 +233,10 @@ const Step8 = () => {
                   </Button>
                   
                   {hasOutline && (
-                    <Button onClick={handleGenerateOutlineClick}>
+                    <Button 
+                      onClick={handleGenerateOutlineClick}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
                       Proceed to Restructure
                     </Button>
                   )}
@@ -315,6 +317,7 @@ const Step8 = () => {
                         setShowRefactoring(true);
                         setActiveTab("refine");
                       }}
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       Proceed to Refine & Polish
                     </Button>

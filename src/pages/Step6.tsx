@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step6Data } from "@/types/essay";
@@ -33,16 +32,13 @@ const Step6 = () => {
       if (data) {
         setEssayData(data);
         
-        // Load paragraphs from step 5
         if (data.step5?.paragraphs && data.step5.paragraphs.length > 0) {
           setParagraphs(data.step5.paragraphs);
           setActiveParagraphIndex(0);
           
-          // Initialize sentences for the first paragraph
           splitParagraphIntoSentences(data.step5.paragraphs[0], 0);
         }
         
-        // Load edit history if it exists
         if (data.step6?.editHistory) {
           setEditHistory(data.step6.editHistory);
         }
@@ -50,9 +46,7 @@ const Step6 = () => {
     }
   }, []);
 
-  // Function to split paragraph text into sentences
   const splitParagraphIntoSentences = (paragraphText: string, paragraphIndex: number) => {
-    // Basic sentence splitting (this could be improved with a more sophisticated regex)
     const sentences = paragraphText
       .split(/(?<=[.!?])\s+/)
       .filter(sentence => sentence.trim().length > 0);
@@ -81,7 +75,6 @@ const Step6 = () => {
   const applyEditedSentence = () => {
     if (selectedSentenceIndex === -1 || !editedSentence.trim()) return;
     
-    // Record edit in history
     const newHistoryEntry = {
       paragraphIndex: activeParagraphIndex,
       originalSentence: selectedSentence,
@@ -92,27 +85,21 @@ const Step6 = () => {
     const newEditHistory = [...editHistory, newHistoryEntry];
     setEditHistory(newEditHistory);
     
-    // Update the paragraph with the edited sentence
     const newSentences = [...sentencesInParagraph];
     newSentences[selectedSentenceIndex] = editedSentence;
     
-    // Join sentences back into paragraph
     const updatedParagraphText = newSentences.join(" ");
     
-    // Update paragraphs array
     const newParagraphs = [...paragraphs];
     newParagraphs[activeParagraphIndex] = updatedParagraphText;
     setParagraphs(newParagraphs);
     
-    // Refresh the sentences display
     setSentencesInParagraph(newSentences);
     
-    // Clear selection
     setSelectedSentence("");
     setSelectedSentenceIndex(-1);
     setEditedSentence("");
     
-    // Show success message
     toast("Sentence updated", {
       description: "Your edited sentence has been applied to the paragraph.",
     });
@@ -121,40 +108,33 @@ const Step6 = () => {
   const handleSentenceDelete = () => {
     if (selectedSentenceIndex === -1) return;
     
-    // Record deletion in edit history
     const newHistoryEntry = {
       paragraphIndex: activeParagraphIndex,
       originalSentence: selectedSentence,
-      newSentence: "", // Empty string indicates deletion
+      newSentence: "",
       timestamp: Date.now()
     };
     
     const newEditHistory = [...editHistory, newHistoryEntry];
     setEditHistory(newEditHistory);
     
-    // Remove the sentence
     const newSentences = [...sentencesInParagraph];
     newSentences.splice(selectedSentenceIndex, 1);
     
-    // If no sentences left, create an empty paragraph
     const updatedParagraphText = newSentences.length > 0 
       ? newSentences.join(" ") 
       : "";
     
-    // Update paragraphs array
     const newParagraphs = [...paragraphs];
     newParagraphs[activeParagraphIndex] = updatedParagraphText;
     setParagraphs(newParagraphs);
     
-    // Refresh the sentences display
     setSentencesInParagraph(newSentences);
     
-    // Clear selection
     setSelectedSentence("");
     setSelectedSentenceIndex(-1);
     setEditedSentence("");
     
-    // Show success message
     toast("Sentence deleted", {
       description: "The selected sentence has been removed from the paragraph.",
     });
@@ -168,25 +148,20 @@ const Step6 = () => {
     const newSentences = [...sentencesInParagraph];
     const newIndex = direction === 'up' ? selectedSentenceIndex - 1 : selectedSentenceIndex + 1;
     
-    // Swap the sentences
     [newSentences[selectedSentenceIndex], newSentences[newIndex]] = 
       [newSentences[newIndex], newSentences[selectedSentenceIndex]];
     
-    // Join sentences back into paragraph
     const updatedParagraphText = newSentences.join(" ");
     
-    // Update paragraphs array
     const newParagraphs = [...paragraphs];
     newParagraphs[activeParagraphIndex] = updatedParagraphText;
     setParagraphs(newParagraphs);
     
-    // Refresh the sentences display and update selection
     setSentencesInParagraph(newSentences);
     setSelectedSentence(newSentences[newIndex]);
     setSelectedSentenceIndex(newIndex);
     setEditedSentence(newSentences[newIndex]);
     
-    // Record movement in history
     const newHistoryEntry = {
       paragraphIndex: activeParagraphIndex,
       originalSentence: `Sentence moved ${direction}`,
@@ -202,8 +177,6 @@ const Step6 = () => {
   };
 
   const handleAIAssist = () => {
-    // In a real implementation, this would call an AI service
-    // For now, just show a toast
     toast("AI Assistance", {
       description: "AI suggestions would appear here. This feature will be implemented in a future update.",
     });
@@ -211,13 +184,11 @@ const Step6 = () => {
 
   const handleSave = (data: EssayData) => {
     if (data) {
-      // Save the current paragraphs to both step5 and as the basis for step6
       if (!data.step5) {
         data.step5 = { paragraphs: [] };
       }
       data.step5.paragraphs = [...paragraphs];
       
-      // Save edit history
       data.step6 = {
         editHistory: editHistory
       };
@@ -226,12 +197,10 @@ const Step6 = () => {
     }
   };
 
-  // Calculate progress based on edits made
   const totalParagraphs = paragraphs.length;
   const paragraphsEdited = new Set(editHistory.map(edit => edit.paragraphIndex)).size;
   const progress = totalParagraphs > 0 ? (paragraphsEdited / totalParagraphs) * 100 : 0;
   
-  // Allow proceeding if edits have been made to at least 3 sentences
   const canProceed = editHistory.length >= 3;
 
   return (
@@ -241,12 +210,12 @@ const Step6 = () => {
       onSave={handleSave}
       canProceed={canProceed}
     >
-      <h2 className="text-2xl font-nunito font-bold text-green-800 mb-6">
+      <h2 className="text-2xl font-nunito font-bold text-blue-800 mb-6">
         Sentence Editing & Refinement
       </h2>
 
-      <Card className="mb-8 border-green-100">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-lg">
+      <Card className="mb-8 border-blue-100">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-t-lg">
           <CardTitle>Refine Your Writing at the Sentence Level</CardTitle>
           <CardDescription>
             Polish each sentence for clarity, conciseness, and impact.
@@ -261,7 +230,7 @@ const Step6 = () => {
           
           <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden mb-2">
             <div
-              className="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -293,12 +262,12 @@ const Step6 = () => {
             handleParagraphSelect(index);
           }}
         >
-          <TabsList className="mb-4 flex flex-wrap h-auto pb-1 gap-1 bg-green-50">
+          <TabsList className="mb-4 flex flex-wrap h-auto pb-1 gap-1 bg-blue-50">
             {paragraphs.map((_, index) => (
               <TabsTrigger 
                 key={index} 
                 value={`paragraph-${index}`}
-                className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
               >
                 Paragraph {index + 1}
               </TabsTrigger>
@@ -307,7 +276,7 @@ const Step6 = () => {
           
           {paragraphs.map((paragraph, pIndex) => (
             <TabsContent key={pIndex} value={`paragraph-${pIndex}`} className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-md border border-green-100 mb-4">
+              <div className="bg-slate-50 p-4 rounded-md border border-blue-100 mb-4">
                 <h3 className="font-medium text-slate-700 mb-2">Current Paragraph</h3>
                 <div>
                   {sentencesInParagraph.map((sentence, sIndex) => (
@@ -316,7 +285,7 @@ const Step6 = () => {
                       onClick={() => handleSentenceSelect(sentence, sIndex)}
                       className={`inline cursor-pointer ${
                         selectedSentenceIndex === sIndex 
-                          ? 'bg-green-100 border-b-2 border-green-400' 
+                          ? 'bg-blue-100 border-b-2 border-blue-400' 
                           : 'hover:bg-slate-100'
                       } px-1 py-0.5 rounded`}
                     >
@@ -327,10 +296,10 @@ const Step6 = () => {
               </div>
               
               {selectedSentenceIndex !== -1 && (
-                <div className="bg-white p-4 rounded-md border border-green-100 shadow-sm">
+                <div className="bg-white p-4 rounded-md border border-blue-100 shadow-sm">
                   <div className="mb-4">
                     <h3 className="font-medium text-slate-700 mb-2">Original Sentence</h3>
-                    <p className="text-slate-600 italic bg-slate-50 p-2 rounded border-l-2 border-green-300">
+                    <p className="text-slate-600 italic bg-slate-50 p-2 rounded border-l-2 border-blue-300">
                       {selectedSentence}
                     </p>
                   </div>
@@ -341,19 +310,19 @@ const Step6 = () => {
                       value={editedSentence}
                       onChange={(e) => handleSentenceEdit(e.target.value)}
                       placeholder="Rewrite the sentence here..."
-                      className="min-h-[100px] border-green-100 focus-visible:ring-green-400"
+                      className="min-h-[100px] border-blue-100 focus-visible:ring-blue-400"
                     />
                   </div>
                   
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={applyEditedSentence} className="space-x-1 bg-green-600 hover:bg-green-700">
+                    <Button onClick={applyEditedSentence} className="space-x-1 bg-blue-600 hover:bg-blue-700">
                       <Check className="w-4 h-4" />
                       <span>Apply Edit</span>
                     </Button>
                     <Button 
                       variant="outline" 
                       onClick={handleAIAssist} 
-                      className="space-x-1 border-green-200 hover:bg-green-50"
+                      className="space-x-1 border-blue-200 hover:bg-blue-50"
                     >
                       <Wand2 className="w-4 h-4" />
                       <span>Get AI Suggestions</span>
@@ -362,7 +331,7 @@ const Step6 = () => {
                       variant="outline"
                       onClick={() => handleSentenceMove('up')}
                       disabled={selectedSentenceIndex === 0}
-                      className="border-green-200 hover:bg-green-50"
+                      className="border-blue-200 hover:bg-blue-50"
                     >
                       <ArrowUp className="w-4 h-4" />
                     </Button>
@@ -370,7 +339,7 @@ const Step6 = () => {
                       variant="outline"
                       onClick={() => handleSentenceMove('down')}
                       disabled={selectedSentenceIndex === sentencesInParagraph.length - 1}
-                      className="border-green-200 hover:bg-green-50"
+                      className="border-blue-200 hover:bg-blue-50"
                     >
                       <ArrowDown className="w-4 h-4" />
                     </Button>
@@ -389,7 +358,7 @@ const Step6 = () => {
               {editHistory.filter(edit => edit.paragraphIndex === pIndex).length > 0 && (
                 <div className="mt-6">
                   <h3 className="font-medium text-slate-700 mb-2">Edit History</h3>
-                  <div className="bg-white rounded-md border border-green-100 divide-y divide-green-50">
+                  <div className="bg-white rounded-md border border-blue-100 divide-y divide-blue-50">
                     {editHistory
                       .filter(edit => edit.paragraphIndex === pIndex)
                       .map((edit, index) => (
