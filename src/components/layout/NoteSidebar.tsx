@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronRight, 
@@ -7,11 +7,16 @@ import {
   BookOpen, 
   HelpCircle, 
   PenLine, 
-  FileText 
+  FileText,
+  Save
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { EssayData } from "@/types/essay";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { saveEssayData } from "@/utils/localStorage";
 
 type NoteSidebarProps = {
   essayData: EssayData | null;
@@ -22,16 +27,15 @@ export function NoteSidebar({ essayData, onSaveNotes }: NoteSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"reading" | "questions" | "outline" | "custom">("reading");
   const [showMemoryPopover, setShowMemoryPopover] = useState(false);
+  
+  // State for notes
+  const [readingsList, setReadingsList] = useState<{title: string; notes: string}[]>([]);
+  const [customNotes, setCustomNotes] = useState("");
+  const [newReadingTitle, setNewReadingTitle] = useState("");
+  const [newReadingNotes, setNewReadingNotes] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // Default content for the sidebar tabs
-  const readingNotes = [
-    { id: 1, text: "Consider what interests you most about this topic", checked: false },
-    { id: 2, text: "Look for connections between different sources", checked: false },
-    { id: 3, text: "Identify main arguments in your readings", checked: false },
-    { id: 4, text: "Note contradictions between different authors", checked: false },
-    { id: 5, text: "Write down unfamiliar terms to research", checked: false },
-  ];
-
   const topicQuestions = [
     { id: 1, text: "What is the main controversy in this area?", checked: false },
     { id: 2, text: "Who are the main authorities on this topic?", checked: false },
@@ -49,25 +53,103 @@ export function NoteSidebar({ essayData, onSaveNotes }: NoteSidebarProps) {
     { id: 6, text: "Conclusion that reinforces thesis", checked: false },
   ];
 
+  // Load readings from essay data
+  useEffect(() => {
+    if (essayData?.step3?.readings) {
+      setReadingsList(essayData.step3.readings);
+    }
+    
+    if (essayData?.step3?.notes) {
+      setCustomNotes(essayData.step3.notes);
+    }
+  }, [essayData]);
+
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const handleCheckboxChange = (id: number) => {
     // This would update the checked state and potentially save to local storage
-    // In a real implementation, we'd update the respective array and save changes
+  };
+  
+  const handleAddReading = () => {
+    if (!newReadingTitle.trim()) {
+      toast("Please enter a title", { 
+        description: "Reading title cannot be empty" 
+      });
+      return;
+    }
+    
+    const newReading = { 
+      title: newReadingTitle, 
+      notes: newReadingNotes 
+    };
+    
+    const updatedReadings = [...readingsList, newReading];
+    setReadingsList(updatedReadings);
+    
+    // Save to essayData
+    if (essayData) {
+      if (!essayData.step3) essayData.step3 = { topics: [], readings: [] };
+      essayData.step3.readings = updatedReadings;
+      saveEssayData(essayData);
+      toast("Reading added", { description: "Your reading note has been saved" });
+    }
+    
+    // Reset fields
+    setNewReadingTitle("");
+    setNewReadingNotes("");
+  };
+  
+  const handleSaveCustomNotes = () => {
+    if (essayData) {
+      if (!essayData.step3) essayData.step3 = { topics: [], readings: [] };
+      essayData.step3.notes = customNotes;
+      saveEssayData(essayData);
+      toast("Notes saved", { description: "Your custom notes have been saved" });
+    }
   };
 
   const renderContent = () => {
     switch (activeTab) {
       case "reading":
         return (
-          <div className="space-y-2">
+          <div className="space-y-4">
             <h3 className="text-sm font-medium mb-3">Reading Notes</h3>
-            {readingNotes.map((note) => (
-              <div key={note.id} className="flex items-start space-x-2">
-                <Checkbox id={`reading-${note.id}`} checked={note.checked} onCheckedChange={() => handleCheckboxChange(note.id)} />
-                <label htmlFor={`reading-${note.id}`} className="text-sm leading-tight">{note.text}</label>
+            
+            {readingsList.length > 0 ? (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {readingsList.map((reading, idx) => (
+                  <div key={idx} className="p-2 rounded bg-blue-50 border border-blue-100">
+                    <div className="font-medium text-sm">{reading.title}</div>
+                    <div className="text-xs mt-1 text-slate-600">{reading.notes}</div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="text-sm text-slate-500 italic">No reading notes yet</div>
+            )}
+            
+            <div className="border-t pt-3 mt-4">
+              <h4 className="text-xs font-medium mb-2">Add New Reading Note</h4>
+              <Input 
+                placeholder="Source title"
+                value={newReadingTitle}
+                onChange={(e) => setNewReadingTitle(e.target.value)}
+                className="text-sm mb-2"
+              />
+              <Textarea
+                placeholder="Your notes..."
+                value={newReadingNotes}
+                onChange={(e) => setNewReadingNotes(e.target.value)}
+                className="text-sm mb-2 h-20"
+              />
+              <Button 
+                onClick={handleAddReading} 
+                size="sm" 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                Add Reading
+              </Button>
+            </div>
           </div>
         );
       case "questions":
@@ -98,11 +180,21 @@ export function NoteSidebar({ essayData, onSaveNotes }: NoteSidebarProps) {
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-medium mb-3">Custom Notes</h3>
-            <textarea 
+            <Textarea 
               className="w-full h-48 p-2 text-sm border rounded" 
               placeholder="Your custom notes here..."
+              value={customNotes}
+              onChange={(e) => setCustomNotes(e.target.value)}
             />
-            <Button size="sm" variant="outline" className="w-full">Save Notes</Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="w-full flex items-center justify-center space-x-1"
+              onClick={handleSaveCustomNotes}
+            >
+              <Save className="w-3 h-3" />
+              <span>Save Notes</span>
+            </Button>
           </div>
         );
     }

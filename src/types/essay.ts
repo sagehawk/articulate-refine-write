@@ -1,3 +1,4 @@
+
 export interface Essay {
   id: string;
   title: string;
@@ -21,6 +22,7 @@ export interface Step2Data {
 export interface Step3Data {
   topics: string[];
   readings: ReadingItem[];
+  notes?: string; // Added custom notes field
 }
 
 export interface ReadingItem {

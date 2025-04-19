@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
@@ -47,7 +48,11 @@ const Step1 = () => {
     
     // Update the step data
     if (data) {
-      data.step1 = {};
+      data.step1 = {
+        goal: goal || "",
+        workspace: workspace || "",
+        timeManagement: timeManagement || ""
+      };
       
       // Update title if changed
       if (data.essay.title !== title && title.trim()) {

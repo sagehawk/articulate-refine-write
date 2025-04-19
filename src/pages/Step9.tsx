@@ -1,27 +1,31 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step9Data } from "@/types/essay";
-import { completeEssay, getActiveEssay, getEssayData, saveEssayData } from "@/utils/localStorage";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getActiveEssay, getEssayData, saveEssayData, completeEssay } from "@/utils/localStorage";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { AlertCircle, Check, Download, Eye, ExternalLink } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Check, List, Copy, Upload, Download } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const Step9 = () => {
   const navigate = useNavigate();
-  const [bibliography, setBibliography] = useState<string>("");
+  const [bibliography, setBibliography] = useState("");
   const [formattingChecks, setFormattingChecks] = useState({
     doubleSpaced: false,
     titlePage: false,
-    citationsChecked: false,
+    citationsChecked: false
   });
-  const [finalEssay, setFinalEssay] = useState<string>("");
   const [essayData, setEssayData] = useState<EssayData | null>(null);
+  const [essayPreview, setEssayPreview] = useState("");
+  const [bibliographySource, setBibliographySource] = useState("");
+  const [bibliographyFormat, setBibliographyFormat] = useState("MLA");
+  const [showFormatting, setShowFormatting] = useState(false);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -31,60 +35,118 @@ const Step9 = () => {
       if (data) {
         setEssayData(data);
         
-        let paragraphs: string[] = [];
-        
-        if (data.step8?.newParagraphs && data.step8.newParagraphs.some(p => p.trim())) {
-          paragraphs = data.step8.newParagraphs.filter(p => p.trim());
-        } else if (data.step5?.paragraphs) {
-          const originalParagraphs = data.step5.paragraphs;
-          
-          if (data.step7?.paragraphOrder) {
-            paragraphs = data.step7.paragraphOrder.map(index => originalParagraphs[index]);
-          } else {
-            paragraphs = originalParagraphs;
-          }
+        // Load bibliography if it exists
+        if (data.step9?.bibliography) {
+          setBibliography(data.step9.bibliography);
         }
         
-        setFinalEssay(paragraphs.join("\n\n"));
-        
-        if (data.step9) {
-          setBibliography(data.step9.bibliography || "");
-          setFormattingChecks(data.step9.formattingChecks || {
-            doubleSpaced: false,
-            titlePage: false,
-            citationsChecked: false,
-          });
+        // Load formatting checks if they exist
+        if (data.step9?.formattingChecks) {
+          setFormattingChecks(data.step9.formattingChecks);
         }
+        
+        // Generate essay preview based on paragraphs from step 5 or later
+        generateEssayPreview(data);
       }
     }
   }, []);
 
-  const handleBibliographyChange = (value: string) => {
-    setBibliography(value);
+  const generateEssayPreview = (data: EssayData) => {
+    // Use the most recent version of paragraphs
+    let paragraphs: string[] = [];
+    
+    // Check for the latest paragraphs (in reverse order of steps)
+    if (data.step8?.newParagraphs && data.step8.newParagraphs.length > 0) {
+      paragraphs = data.step8.newParagraphs;
+    } else if (data.step5?.paragraphs && data.step5.paragraphs.length > 0) {
+      paragraphs = data.step5.paragraphs;
+    }
+    
+    // Join paragraphs with double newlines
+    const preview = paragraphs.join("\n\n");
+    setEssayPreview(preview);
   };
 
-  const toggleFormattingCheck = (key: keyof typeof formattingChecks) => {
-    setFormattingChecks(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  const handleBibliographyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBibliography(e.target.value);
   };
 
-  const exportEssay = () => {
-    const fullEssay = `${finalEssay}\n\n${bibliography ? "References\n\n" + bibliography : ""}`;
+  const handleCheckChange = (key: keyof typeof formattingChecks, checked: boolean) => {
+    setFormattingChecks(prev => ({ ...prev, [key]: checked }));
+  };
+  
+  const handleBibliographySourceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBibliographySource(e.target.value);
+  };
+  
+  const generateBibliographyEntry = () => {
+    if (!bibliographySource.trim()) {
+      toast("Please enter a source", {
+        description: "Enter a URL, book title, or article name"
+      });
+      return;
+    }
     
-    const element = document.createElement("a");
-    const file = new Blob([fullEssay], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = `${essayData?.essay.title || "essay"}.txt`;
+    // For now, we'll just create a simple bibliography entry based on the source
+    // In a real app, this would call an API to generate proper citations
+    const today = new Date();
+    const formattedDate = `${today.getDate()} ${today.toLocaleString('default', { month: 'short' })} ${today.getFullYear()}`;
     
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    let newEntry = "";
+    if (bibliographySource.startsWith("http")) {
+      // It's a URL
+      if (bibliographyFormat === "MLA") {
+        newEntry = `"${bibliographySource.split("/")[2]}." Web. ${formattedDate}.`;
+      } else if (bibliographyFormat === "APA") {
+        newEntry = `Retrieved from ${bibliographySource} on ${formattedDate}.`;
+      } else {
+        newEntry = `${bibliographySource} (accessed ${formattedDate})`;
+      }
+    } else {
+      // It's a book or article
+      if (bibliographyFormat === "MLA") {
+        newEntry = `"${bibliographySource}." Print. ${formattedDate}.`;
+      } else if (bibliographyFormat === "APA") {
+        newEntry = `${bibliographySource}. (${today.getFullYear()}).`;
+      } else {
+        newEntry = `${bibliographySource} (${today.getFullYear()})`;
+      }
+    }
     
-    toast("Essay Exported", {
-      description: "Your essay has been downloaded as a text file.",
+    // Append to existing bibliography
+    const updatedBibliography = bibliography 
+      ? `${bibliography}\n\n${newEntry}` 
+      : newEntry;
+      
+    setBibliography(updatedBibliography);
+    setBibliographySource("");
+    
+    toast("Bibliography entry added", {
+      description: `Added in ${bibliographyFormat} format`
     });
+  };
+  
+  const copyToClipboard = () => {
+    const essay = essayData?.essay.title 
+      ? `${essayData.essay.title}\n\n${essayPreview}\n\nBibliography:\n${bibliography}`
+      : `${essayPreview}\n\nBibliography:\n${bibliography}`;
+    
+    navigator.clipboard.writeText(essay).then(() => {
+      toast("Copied to clipboard", {
+        description: "Your essay has been copied to the clipboard"
+      });
+    });
+  };
+
+  const handleSave = (data: EssayData) => {
+    if (data) {
+      data.step9 = {
+        bibliography,
+        formattingChecks
+      };
+      
+      saveEssayData(data);
+    }
   };
 
   const handleComplete = () => {
@@ -98,21 +160,26 @@ const Step9 = () => {
     }
   };
 
-  const handleSave = (data: EssayData) => {
-    if (data) {
-      data.step9 = {
-        bibliography: bibliography,
-        formattingChecks: formattingChecks
-      };
-      
-      saveEssayData(data);
-    }
+  const exportToText = () => {
+    if (!essayData) return;
+    
+    // Create text content with title, paragraphs, and bibliography
+    const content = `${essayData.essay.title}\n\n${essayPreview}\n\nBibliography:\n${bibliography}`;
+    
+    // Create a blob and download it
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${essayData.essay.title.replace(/[^a-z0-9]/gi, "-").toLowerCase()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    setShowFormatting(true);
   };
 
-  const allChecksDone = Object.values(formattingChecks).every(Boolean);
-  const hasBibliography = bibliography.trim().length > 0;
-  
-  const canProceed = hasBibliography && allChecksDone;
+  // Calculate if can proceed: essay has content and bibliography is not empty
+  const canProceed = essayPreview.trim().length > 0 && bibliography.trim().length > 0;
 
   return (
     <StepLayout 
@@ -122,200 +189,156 @@ const Step9 = () => {
       canProceed={true}
       onComplete={handleComplete}
     >
-      <h2 className="text-2xl font-nunito font-bold text-green-800 mb-6">
+      <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-6">
         References & Formatting
       </h2>
 
-      <Card className="mb-8 border-green-100">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 rounded-t-lg">
-          <CardTitle>Finalize Your Essay</CardTitle>
-          <CardDescription>
-            Add citations, check formatting, and prepare for submission.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-slate-600 mb-4">
-            Peterson emphasizes that proper citations and formatting are essential for academic 
-            integrity and professionalism. Complete your bibliography and use the checklist 
-            to ensure your essay meets all submission requirements.
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{essayData?.essay.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-slate-50 p-4 rounded-md border border-slate-200 h-64 overflow-y-auto">
+                <p className="whitespace-pre-line text-sm text-slate-700">
+                  {essayPreview}
+                </p>
+              </div>
+              <div className="flex mt-4 space-x-2">
+                <Button 
+                  onClick={exportToText}
+                  className="space-x-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Export to Text</span>
+                </Button>
+                <Button 
+                  onClick={copyToClipboard}
+                  variant="outline"
+                  className="space-x-1"
+                >
+                  <Copy className="h-4 w-4" />
+                  <span>Copy to Clipboard</span>
+                </Button>
+                
+                <Button
+                  onClick={handleComplete}
+                  className="space-x-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  <Check className="h-4 w-4" />
+                  <span>Complete Essay</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="flex flex-wrap gap-4 mt-4">
-            <Button 
-              onClick={exportEssay} 
-              variant="outline"
-              className="space-x-1 border-green-200 hover:bg-green-50"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export as Text</span>
-            </Button>
-            
-            <Button
-              onClick={handleComplete}
-              className="space-x-1 bg-green-600 hover:bg-green-700"
-            >
-              <Check className="h-4 w-4" />
-              <span>Mark as Complete</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {finalEssay ? (
-        <Tabs defaultValue="bibliography" className="w-full space-y-6">
-          <TabsList className="bg-green-50">
-            <TabsTrigger value="bibliography" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Bibliography</TabsTrigger>
-            <TabsTrigger value="formatting" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Formatting Checklist</TabsTrigger>
-            <TabsTrigger value="preview" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">Preview Essay</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="bibliography" className="space-y-6">
-            <Card className="border-green-100">
+          {showFormatting && (
+            <Card>
               <CardHeader>
-                <CardTitle>Bibliography / References</CardTitle>
-                <CardDescription>
-                  Add your citations following your preferred style (APA, MLA, Chicago, etc.)
-                </CardDescription>
+                <CardTitle className="flex items-center">
+                  <List className="mr-2 h-5 w-5" />
+                  <span>Formatting Checklist</span>
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-medium text-slate-800">References List</h3>
-                    <a 
-                      href="https://owl.purdue.edu/owl/research_and_citation/resources.html" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-green-600 hover:text-green-800 flex items-center gap-1"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      <span>Citation Style Guides</span>
-                    </a>
-                  </div>
-                  
-                  <Textarea
-                    value={bibliography}
-                    onChange={(e) => handleBibliographyChange(e.target.value)}
-                    placeholder="Enter your bibliography/references here..."
-                    className="min-h-[300px] font-mono text-sm border-green-100 focus-visible:ring-green-400"
+              <CardContent className="space-y-4">
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="doubleSpaced" 
+                    checked={formattingChecks.doubleSpaced} 
+                    onCheckedChange={(checked) => handleCheckChange('doubleSpaced', !!checked)} 
                   />
-                  
-                  <p className="text-xs text-slate-500 mt-2">
-                    Enter each citation on a new line. Follow your required citation style consistently.
-                  </p>
+                  <Label htmlFor="doubleSpaced" className="leading-tight">
+                    Double-spaced throughout
+                  </Label>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="titlePage" 
+                    checked={formattingChecks.titlePage} 
+                    onCheckedChange={(checked) => handleCheckChange('titlePage', !!checked)}
+                  />
+                  <Label htmlFor="titlePage" className="leading-tight">
+                    Title page with name, course, date
+                  </Label>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="citationsChecked" 
+                    checked={formattingChecks.citationsChecked} 
+                    onCheckedChange={(checked) => handleCheckChange('citationsChecked', !!checked)}
+                  />
+                  <Label htmlFor="citationsChecked" className="leading-tight">
+                    All citations are properly formatted
+                  </Label>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="formatting" className="space-y-6">
-            <Card className="border-green-100">
-              <CardHeader>
-                <CardTitle>Formatting Checklist</CardTitle>
-                <CardDescription>
-                  Ensure your essay meets all formatting requirements
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="doubleSpaced" 
-                      checked={formattingChecks.doubleSpaced}
-                      onCheckedChange={() => toggleFormattingCheck("doubleSpaced")}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+          )}
+        </div>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bibliography</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-col space-y-2">
+                  <Label htmlFor="bibliography-source">Add Source</Label>
+                  <div className="flex space-x-2">
+                    <Input 
+                      id="bibliography-source" 
+                      placeholder="Enter URL, book title, or article"
+                      value={bibliographySource}
+                      onChange={handleBibliographySourceChange}
                     />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="doubleSpaced"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Double-spaced text
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        Ensure your essay is double-spaced according to academic standards.
-                      </p>
-                    </div>
+                    <Button 
+                      onClick={generateBibliographyEntry} 
+                      className="whitespace-nowrap bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Format
+                    </Button>
                   </div>
-                  
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="titlePage" 
-                      checked={formattingChecks.titlePage}
-                      onCheckedChange={() => toggleFormattingCheck("titlePage")}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="titlePage"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Title page included
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        Your essay includes a properly formatted title page with your name, course information, and date.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-2">
-                    <Checkbox 
-                      id="citationsChecked" 
-                      checked={formattingChecks.citationsChecked}
-                      onCheckedChange={() => toggleFormattingCheck("citationsChecked")}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="citationsChecked"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Citations verified
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        All quotes and paraphrased material are properly cited in the text and in the bibliography.
-                      </p>
-                    </div>
+                  <div className="flex space-x-2 mt-1">
+                    <Button 
+                      variant={bibliographyFormat === "MLA" ? "secondary" : "outline"}
+                      onClick={() => setBibliographyFormat("MLA")}
+                      size="sm"
+                    >
+                      MLA
+                    </Button>
+                    <Button 
+                      variant={bibliographyFormat === "APA" ? "secondary" : "outline"}
+                      onClick={() => setBibliographyFormat("APA")}
+                      size="sm"
+                    >
+                      APA
+                    </Button>
+                    <Button 
+                      variant={bibliographyFormat === "Chicago" ? "secondary" : "outline"}
+                      onClick={() => setBibliographyFormat("Chicago")}
+                      size="sm"
+                    >
+                      Chicago
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="preview" className="space-y-6">
-            <Card className="border-green-100">
-              <CardHeader>
-                <CardTitle>Essay Preview</CardTitle>
-                <CardDescription>
-                  Review your completed essay
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="prose prose-sm max-w-none">
-                  {finalEssay.split("\n\n").map((paragraph, index) => (
-                    <p key={index} className="mb-4">{paragraph}</p>
-                  ))}
-                  
-                  {bibliography && (
-                    <>
-                      <h3 className="text-lg font-semibold mt-8 mb-4">References</h3>
-                      <div className="whitespace-pre-line font-mono text-sm">
-                        {bibliography}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You need to create paragraphs in the previous steps before finalizing your essay.
-          </AlertDescription>
-        </Alert>
-      )}
+                
+                <Textarea
+                  placeholder="Enter your bibliography here..."
+                  value={bibliography}
+                  onChange={handleBibliographyChange}
+                  className="h-64"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </StepLayout>
   );
 };
