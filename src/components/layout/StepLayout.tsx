@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState } from "react";
 import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep, completeEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
-import { ArrowLeft, ArrowRight, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save, X, RefreshCw } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -27,14 +27,7 @@ interface StepLayoutProps {
   onComplete?: () => void;
 }
 
-export function StepLayout({
-  children,
-  step,
-  totalSteps,
-  onSave,
-  canProceed = true,
-  onComplete,
-}: StepLayoutProps) {
+export function StepLayout({ children, step, totalSteps, onSave, canProceed = true, onComplete }: StepLayoutProps) {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -145,6 +138,17 @@ export function StepLayout({
     }
   };
 
+  const handleDiscard = () => {
+    const activeEssayId = getActiveEssay();
+    if (activeEssayId) {
+      const data = getEssayData(activeEssayId);
+      if (data) {
+        setEssayData(data);
+        window.location.reload();
+      }
+    }
+  };
+
   const getPreviousButtonText = () => {
     if (step === 9) return "Refine More";
     if (step > 1) return "Previous";
@@ -217,15 +221,35 @@ export function StepLayout({
             <span>{getPreviousButtonText()}</span>
           </Button>
           
-          <Button 
-            variant="secondary" 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="space-x-1 bg-blue-100 hover:bg-blue-200 text-blue-800"
-          >
-            <Save className="w-4 h-4" />
-            <span>{isSaving ? "Saving..." : "Save"}</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleExit}
+              className="space-x-1 border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <X className="w-4 h-4" />
+              <span>Exit Without Saving</span>
+            </Button>
+            
+            <Button 
+              onClick={handleDiscard}
+              variant="outline"
+              className="space-x-1 border-orange-200 text-orange-600 hover:bg-orange-50"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Discard Changes</span>
+            </Button>
+            
+            <Button 
+              variant="secondary" 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="space-x-1 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Save className="w-4 h-4" />
+              <span>{isSaving ? "Saving..." : "Save"}</span>
+            </Button>
+          </div>
           
           <Button 
             onClick={goNext} 

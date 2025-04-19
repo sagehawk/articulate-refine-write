@@ -135,7 +135,7 @@ export function EssayList({ essays, title, icon, onEssayDeleted }: EssayListProp
               <Button
                 onClick={() => handleContinueEssay(essay)}
                 size="sm"
-                className="space-x-1"
+                className="space-x-1 bg-blue-600 hover:bg-blue-700"
               >
                 <span>{essay.isCompleted ? "View" : "Continue"}</span>
                 <ArrowRight className="h-4 w-4" />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step9Data } from "@/types/essay";
@@ -220,14 +219,6 @@ const Step9 = () => {
                 >
                   <Copy className="h-4 w-4" />
                   <span>Copy to Clipboard</span>
-                </Button>
-                
-                <Button
-                  onClick={handleComplete}
-                  className="space-x-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  <Check className="h-4 w-4" />
-                  <span>Complete Essay</span>
                 </Button>
               </div>
             </CardContent>
