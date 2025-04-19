@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState } from "react";
@@ -43,18 +42,15 @@ export function StepLayout({
   const [isEditing, setIsEditing] = useState(false);
   const [editableTitle, setEditableTitle] = useState("");
 
-  // Load the active essay
   useEffect(() => {
     const activeEssayId = getActiveEssay();
     if (!activeEssayId) {
-      // No active essay, redirect to homepage
       navigate("/");
       return;
     }
 
     const data = getEssayData(activeEssayId);
     if (!data) {
-      // Essay not found, redirect to homepage
       navigate("/");
       return;
     }
@@ -62,7 +58,6 @@ export function StepLayout({
     setEssayData(data);
     setEditableTitle(data.essay.title);
     
-    // Update the current step if needed
     if (data.essay.currentStep !== step) {
       updateEssayStep(activeEssayId, step);
     }
@@ -74,15 +69,12 @@ export function StepLayout({
     setIsSaving(true);
     
     try {
-      // Call the custom onSave handler if provided
       if (onSave) {
         onSave(essayData);
       }
       
-      // Save the data
       saveEssayData(essayData);
       
-      // Show a brief "Saved" indication
       setTimeout(() => {
         setIsSaving(false);
       }, 500);
@@ -95,10 +87,8 @@ export function StepLayout({
   const goToStep = (targetStep: number) => {
     if (!essayData) return;
     
-    // Save current data before navigating
     handleSave();
     
-    // Navigate to the target step
     navigate(`/step${targetStep}`);
   };
 
@@ -116,11 +106,9 @@ export function StepLayout({
     if (step < totalSteps) {
       goToStep(step + 1);
     } else {
-      // On the last step, call onComplete if provided
       if (onComplete) {
         onComplete();
       } else if (essayData) {
-        // Default completion behavior
         completeEssay(essayData.essay.id);
         toast("Essay Completed!", {
           description: "Your essay has been marked as complete.",
@@ -157,9 +145,14 @@ export function StepLayout({
     }
   };
 
+  const getPreviousButtonText = () => {
+    if (step === 9) return "Refine More";
+    if (step > 1) return "Previous";
+    return "Exit";
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-blue-100 py-4 px-6 flex items-center justify-between">
         {isEditing ? (
           <div className="flex-1 max-w-md">
@@ -205,22 +198,23 @@ export function StepLayout({
         </Button>
       </header>
 
-      {/* Main content */}
       <main className="flex-grow p-6 md:p-8 max-w-5xl mx-auto w-full">
         <div className="bg-white rounded-lg shadow-md border border-blue-50 p-6 md:p-8">
           {children}
         </div>
       </main>
 
-      {/* Add the sidebar component */}
       <NoteSidebar essayData={essayData} />
 
-      {/* Footer with navigation */}
       <footer className="bg-white shadow-sm border-t border-blue-100 py-4 px-6 mt-auto">
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
-          <Button variant="outline" onClick={goBack} className="space-x-1 border-blue-200 hover:bg-blue-50">
+          <Button 
+            variant="outline" 
+            onClick={goBack} 
+            className="space-x-1 border-blue-200 hover:bg-blue-50"
+          >
             <ArrowLeft className="w-4 h-4" />
-            <span>{step > 1 ? "Previous" : "Exit"}</span>
+            <span>{getPreviousButtonText()}</span>
           </Button>
           
           <Button 
@@ -244,7 +238,6 @@ export function StepLayout({
         </div>
       </footer>
 
-      {/* Exit confirmation dialog */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

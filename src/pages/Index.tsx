@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,10 +11,8 @@ const Index = () => {
   const [draftEssays, setDraftEssays] = useState([]);
   const [completedEssays, setCompletedEssays] = useState([]);
   
-  // Load essays on component mount
   useEffect(() => {
     loadEssays();
-    // Clear any active essay when viewing the homepage
     clearActiveEssay();
   }, []);
   
@@ -25,15 +22,12 @@ const Index = () => {
   };
   
   const handleStartNewEssay = () => {
-    // Clear any active essay and navigate to Step 1
-    // We need to create a new essay first, then navigate
     const newEssay = createNewEssay("Untitled Essay");
     navigate("/step1");
   };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-12">
-      {/* Header */}
       <header className="bg-white shadow-sm py-6 px-6 mb-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
@@ -46,7 +40,7 @@ const Index = () => {
             <Button 
               onClick={handleStartNewEssay} 
               size="lg"
-              className="font-medium space-x-2"
+              className="font-medium space-x-2 bg-blue-600 hover:bg-blue-700"
             >
               <FilePlus className="w-5 h-5" />
               <span>Start New Essay</span>
@@ -55,7 +49,6 @@ const Index = () => {
         </div>
       </header>
       
-      {/* Main content */}
       <main className="max-w-5xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <Card className="bg-gradient-to-br from-blue-50 to-slate-50 border-blue-100">
@@ -72,7 +65,7 @@ const Index = () => {
               </p>
               <Button 
                 onClick={handleStartNewEssay} 
-                className="font-medium space-x-2 w-full sm:w-auto"
+                className="font-medium space-x-2 w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
               >
                 <FilePlus className="w-5 h-5" />
                 <span>Start New Essay</span>
@@ -144,6 +137,17 @@ const Index = () => {
           onEssayDeleted={loadEssays}
         />
       </main>
+      
+      <script>
+        {`
+          document.addEventListener('DOMContentLoaded', function() {
+            const badge = document.getElementById('lovable-badge');
+            if (badge) {
+              badge.style.display = 'none';
+            }
+          });
+        `}
+      </script>
     </div>
   );
 };
