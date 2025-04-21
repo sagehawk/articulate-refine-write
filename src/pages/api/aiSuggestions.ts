@@ -46,12 +46,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify(requestBody),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API response not OK:', response.status, errorText);
+      return res.status(response.status).json({ 
+        message: `Gemini API error: ${response.status}`,
+        error: errorText
+      });
+    }
+
     const data = await response.json();
 
     // Check for errors from the Gemini API itself
     if (data.error) {
       console.error('Gemini API error:', data.error);
-      return res.status(response.status).json({ message: 'Gemini API error', error: data.error });
+      return res.status(500).json({ message: 'Gemini API error', error: data.error });
     }
 
     // Extract the suggestions from the Gemini response

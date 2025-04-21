@@ -10,13 +10,23 @@ export const getAISuggestions = async (sentence: string): Promise<string[]> => {
       body: JSON.stringify({ sentence }),
     });
 
+    // First check if the response is ok before trying to parse JSON
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to get AI suggestions');
+      // Try to get error details if available
+      let errorMessage = 'Failed to get AI suggestions';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (parseError) {
+        // If we can't parse the response as JSON, use the status text
+        errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
+    // Parse the successful response
     const data = await response.json();
-    return data.suggestions;
+    return data.suggestions || [];
   } catch (error) {
     console.error('Error fetching AI suggestions:', error);
     throw error;
