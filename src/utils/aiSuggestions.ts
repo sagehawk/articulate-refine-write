@@ -1,29 +1,43 @@
-// src/utils/aiSuggestions.ts
+// api/rewrite.ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Define the expected structure of the response from your serverless function
-interface RewriteResponse {
-  suggestions?: string[]; // Your serverless function will return an array of strings here
-  message?: string; // For error messages from your serverless function
-  error?: any; // For detailed error info from your serverless function or Gemini
-}
+// This is the environment variable you set in Vercel's dashboard
+// IMPORTANT: Make sure this variable name in Vercel does NOT start with VITE_
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-/**
- * Fetches AI-generated suggestions for a given sentence by calling a serverless API route.
- * @param sentence The sentence to get suggestions for.
- * @returns A promise that resolves to an array of string suggestions.
- * @throws An error if the API call or response processing fails.
- */
-export async function getAISuggestions(sentence: string): Promise<string[]> {
-  // THIS IS THE KEY CHANGE: Call your local serverless function endpoint
-  const url = '/api/rewrite';
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
 
-  // The request body for YOUR serverless function
+  const { sentence } = req.body;
+
+  if (!sentence) {
+    return res.status(400).json({ message: 'Missing sentence' });
+  }
+
+  if (!GEMINI_API_KEY) {
+    console.error('GEMINI_API_KEY environment variable not set.');
+    // Avoid exposing the exact error to the client for security
+    return res.status(500).json({ message: 'Server configuration error' });
+  }
+
+  // Use the Lite model as discussed
+  const modelName = 'gemini-2.0-flash-lite'; // Changed from 'gemini-2.0-flash-001'
+
+  // Use the API key in the server-to-server call
+  const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+
   const requestBody = {
-    sentence: sentence // Send the sentence in the body
+    contents: [{
+      role: 'user',
+      parts: [{
+        text: `Please provide 3 alternative rewrites for the following sentence, making it clearer, more concise, and more engaging. Focus on improving the flow and impact while maintaining the original meaning. Format each suggestion on a new line starting with a number.\nSentence: ${sentence}\nRewrites:`
+      }]
+    }]
   };
 
   try {
-    // Make the fetch call to YOUR serverless function
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -32,23 +46,24 @@ export async function getAISuggestions(sentence: string): Promise<string[]> {
       body: JSON.stringify(requestBody),
     });
 
-    // Parse the JSON response from YOUR serverless function
-    const data: RewriteResponse = await response.json();
+    const data = await response.json();
 
-    // Check if your serverless function returned an error status
-    if (!response.ok) {
-      const errorMessage = data.message || 'Unknown error from serverless function';
-      // Log the full error data for debugging on the serverless function side
-      console.error('Error response from /api/rewrite:', data);
-      throw new Error(`Server error: ${errorMessage}`);
+    // Check for errors from the Gemini API itself
+    if (data.error) {
+      console.error('Gemini API error:', data.error);
+      return res.status(response.status).json({ message: 'Gemini API error', error: data.error });
     }
 
-    // If successful, return the suggestions array from the serverless function's response
-    return data.suggestions || []; // Assuming your serverless function sends back { suggestions: [...] }
+    // Extract the suggestions from the Gemini response
+    const suggestionsText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // Split into lines and filter out empty ones
+    const suggestions = suggestionsText.split('\n').filter(line => line.trim());
+
+    // Send the suggestions back to your frontend
+    res.status(200).json({ suggestions: suggestions }); // Send an array of strings
 
   } catch (error) {
-    console.error('Error calling serverless function for AI suggestions:', error);
-    // Re-throw the error so your frontend component can catch it
-    throw error;
+    console.error('Error calling Gemini API from serverless function:', error);
+    res.status(500).json({ message: 'Internal server error', error: (error as Error).message });
   }
 }
