@@ -156,10 +156,3 @@ Distributed under the MIT License. See `LICENSE` file for more information.
 *   This project is based on the essay writing methodology detailed by **Jordan B. Peterson**. The goal is to make his structured approach more accessible and interactive.
 *   [Google AI Studio](https://aistudio.google.com/) for providing the Gemini API.
 *   [Create React App](https://create-react-app.dev/)
-
----
-IGNORE_WHEN_COPYING_START
-content_copy
-download
-Use code with caution.
-IGNORE_WHEN_COPYING_END
