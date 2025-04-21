@@ -2,21 +2,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // This is the environment variable you set in Vercel's dashboard
-// IMPORTANT: Make sure this variable name in Vercel does NOT start with VITE_
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers to avoid issues with cross-origin requests
+  // Set CORS headers for all responses
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
   
-  // Handle OPTIONS method for CORS preflight
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
-  // Always ensure we set the correct content type for JSON responses
+  // Always set Content-Type header for JSON
   res.setHeader('Content-Type', 'application/json');
   
   if (req.method !== 'POST') {
@@ -28,12 +28,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { sentence } = req.body;
 
     if (!sentence) {
-      return res.status(400).json({ message: 'Missing sentence parameter' });
+      return res.status(400).json({ 
+        message: 'Missing sentence parameter',
+        suggestions: [] 
+      });
     }
 
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY environment variable not set.');
-      // Return a proper JSON error response
       return res.status(500).json({ 
         message: 'Server configuration error - missing API key',
         suggestions: [] 
@@ -46,7 +48,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Calling Gemini API with sentence:', sentence);
     
     try {
-      // Use the API key in the server-to-server call
       const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
 
       const requestBody = {
@@ -66,6 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         body: JSON.stringify(requestBody),
       });
 
+      console.log('Gemini API response status:', response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Gemini API response not OK:', response.status, errorText);

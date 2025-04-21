@@ -10,21 +10,22 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     proxy: {
-      // Proxy API requests to Vercel during development
+      // Proxy API requests during development
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
         ws: true,
+        rewrite: (path) => path,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
             console.log('Proxy error:', err);
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request:', req.method, req.url);
+            console.log('Sending Request to API:', req.method, req.url);
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response:', proxyRes.statusCode, req.url);
+            console.log('Received API Response:', proxyRes.statusCode, req.url);
           });
         }
       }
@@ -37,8 +38,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   build: {
     rollupOptions: {
-      plugins: [
-      ]
+      plugins: []
     }
   },
   resolve: {

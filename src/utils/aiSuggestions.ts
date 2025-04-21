@@ -4,12 +4,8 @@ export const getAISuggestions = async (sentence: string): Promise<string[]> => {
   try {
     console.log('Sending request to AI suggestions API with sentence:', sentence);
     
-    // Determine base URL based on environment
-    const isProduction = window.location.hostname.includes('vercel.app');
-    // In production, use the full URL to the API endpoint (assuming it's deployed to Vercel)
-    const apiUrl = isProduction 
-      ? `${window.location.origin}/api/aiSuggestions` 
-      : '/api/aiSuggestions';
+    // Use absolute URL for API endpoint to ensure it works in all environments
+    const apiUrl = '/api/aiSuggestions';
     
     console.log('Using API URL:', apiUrl);
     
@@ -24,6 +20,7 @@ export const getAISuggestions = async (sentence: string): Promise<string[]> => {
 
     // Log the response for debugging
     console.log('Raw response status:', response.status, response.statusText);
+    console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
 
     // First check if the response is ok before trying to parse JSON
     if (!response.ok) {
@@ -36,6 +33,7 @@ export const getAISuggestions = async (sentence: string): Promise<string[]> => {
         if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
+          console.error('JSON error response:', errorData);
         } else {
           // If not JSON, just use the status text and log the text content
           const textContent = await response.text();
