@@ -1,73 +1,165 @@
-# Welcome to your Lovable project
+# Articulate & Refine ✨
 
-## Project info
+An interactive web application designed to guide users through the process of writing structured essays, based directly on the methodology outlined in Jordan B. Peterson's "Essay Writing Guide".
 
-**URL**: https://lovable.dev/projects/8798c6aa-ebea-4a91-bd45-c2a97bcd4adb
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Overview
 
-**Use Lovable**
+Articulate & Refine transforms Jordan B. Peterson's insightful essay writing guide from static text into a dynamic, step-by-step digital workspace. It aims to help students, writers, and thinkers improve their ability to formulate, structure, and articulate complex ideas effectively through the practice of writing.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8798c6aa-ebea-4a91-bd45-c2a97bcd4adb) and start prompting.
+Instead of just reading about the process, users actively engage with each stage – from brainstorming and outlining to drafting, refining sentences with AI assistance, and restructuring paragraphs – all within a single, persistent application interface.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Core Concept
 
-**Use your preferred IDE**
+The application breaks down Peterson's 10-part guide into manageable, interactive steps:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1.  **Motivation & Setup:** Define goals, consider workspace, and set the stage.
+2.  **Understanding Levels:** Learn about the different layers of writing (word, sentence, paragraph, etc.).
+3.  **Topic & Research:** Brainstorm topics and actively take notes on readings.
+4.  **Outline Creation:** Build the foundational structure and argument of the essay.
+5.  **Paragraph Drafting:** Flesh out each outline point into a coherent paragraph.
+6.  **Sentence Refinement:** Edit sentences for clarity, conciseness, and impact, with optional AI suggestions. (Potentially reorder sentences within paragraphs).
+7.  **Paragraph Reordering:** Adjust the essay's flow by rearranging paragraphs.
+8.  **Distillation & Restructuring:** Recreate the outline from memory and reorganize the draft based on the improved structure.
+9.  **References & Formatting:** Compile bibliography and perform final checks.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Progress is saved locally in the browser, allowing users to work on multiple essays and return to their work later.
 
-Follow these steps:
+## Features
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+*   **Step-by-Step Guidance:** Follows Peterson's essay writing process sequentially.
+*   **Interactive Workspace:** Provides text inputs, drag-and-drop interfaces, and other tools for each step.
+*   **Essay Management:** Start new essays, view drafts and completed essays on the homepage.
+*   **Local Persistence:** Saves essay title, current step, and all written content (topics, notes, outline, paragraphs, bibliography) in the browser's `localStorage`.
+*   **AI-Powered Sentence Suggestions:** Integrates Google Gemini 1.5 Flash to offer feedback on sentence clarity, conciseness, and style (configurable).
+*   **Paragraph Reordering:** Easy drag-and-drop interface to restructure the essay flow (Step 7).
+*   **Outline Regeneration & Restructuring:** Dedicated step (Step 8) to facilitate Peterson's crucial distillation and rebuilding process.
+*   **Progress Tracking:** Visual progress bar and step navigation dropdown.
+*   **Data Management:** Option to delete individual essays and clear all stored data.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Technology Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+*   **Frontend:** React.js (`create-react-app`)
+*   **Routing:** React Router (`react-router-dom`)
+*   **AI:** Google Gemini 1.5 Flash API via `@google/generative-ai` SDK
+*   **Persistence:** Browser `localStorage` API
+*   **Styling:** CSS (Specify method if using Modules, Tailwind, Styled Components, etc.)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Screenshots / Demo
 
-**Edit a file directly in GitHub**
+![Homepage Screenshot](https://github.com/user-attachments/assets/c7f27236-d8dd-4e04-bea7-16f409d827c4)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+**Example Placeholder:**
 
-**Use GitHub Codespaces**
+![Homepage Screenshot](placeholder-homepage.png)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Getting Started
 
-## What technologies are used for this project?
+To run this project locally:
 
-This project is built with:
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/sagehawk/articulate-refine-write.git
+    cd articulate-refine-write
+    ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-## How can I deploy this project?
+3.  **(Optional) Set up Environment Variables:** 
+    *   You need a Google Gemini API key. Obtain one from [Google AI Studio](https://aistudio.google.com/).
+    *   Create a file named `.env` in the root directory of the project.
+    *   Add your API key to the `.env` file like this:
+        ```
+        REACT_APP_GEMINI_API_KEY=YOUR_API_KEY_HERE
+        ```
+        *(The `REACT_APP_` prefix is essential for Create React App).*
+    *   **Important:** Add the `.env` file to your `.gitignore` file to prevent accidentally committing your secret key!
 
-Simply open [Lovable](https://lovable.dev/projects/8798c6aa-ebea-4a91-bd45-c2a97bcd4adb) and click on Share -> Publish.
+4.  **Run the development server:**
+    ```bash
+    npm start
+    # or
+    yarn start
+    ```
 
-## Can I connect a custom domain to my Lovable project?
+5.  **Open the application:**
+    Navigate to `http://localhost:3000` (or the port specified) in your web browser.
 
-Yes, you can!
+## Usage
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1.  **Start:** On the homepage, click "Start New Essay" or select an existing draft.
+2.  **Follow Steps:** Progress through the steps using the "Next" and "Previous" buttons or the dropdown menu.
+3.  **Input Content:** Enter your essay title, topics, readings, notes, outline, and paragraph drafts as prompted in each step.
+4.  **Refine:** Utilize the sentence editing tools (Step 6) and paragraph reordering (Step 7). Leverage AI suggestions where helpful.
+5.  **Restructure:** Engage with the crucial re-outlining and restructuring process in Step 8.
+6.  **Save:** Progress is automatically saved to `localStorage` on step transitions and can be manually saved using the "Save Progress" button.
+7.  **Finalize:** Add references and complete final checks in Step 9.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Project Structure
+
+
+/public
+index.html
+...
+/src
+/components # Reusable UI components (Button, etc.)
+/common
+/pages # Components for each step (HomePage, Step1, Step2, ...)
+/services # API interaction logic (aiService.js)
+App.css # Main app styles
+App.js # Main application component with routing
+index.css # Global styles
+index.js # Entry point
+.env # Environment variables (API Key - MUST BE IN .gitignore)
+.gitignore
+package.json
+README.md
+
+## AI Integration Details
+
+*   This project uses the **Google Gemini 2.0 Flash Lite** model via the official `@google/generative-ai`.
+*   API calls are handled in `src/pages/api/rewrite.ts`.
+*   Ensure your `REACT_APP_GEMINI_API_KEY` is correctly set in the `.env` file for AI features to function.
+*   Safety settings and generation configurations are set within `aiService.js`.
+
+## Persistence Strategy
+
+*   The application relies solely on the browser's `localStorage` for data persistence.
+*   All data related to an essay (notes, outline, paragraphs, current step) is stored using keys prefixed or associated with the essay title provided in Step 1.
+*   **Limitations:** Data is specific to the browser and machine used. Clearing browser data will erase all saved essays. `localStorage` has size limits (typically 5-10MB).
+
+## Contributing
+
+Contributions are welcome! If you have suggestions for improvements or find bugs, please feel free to open an issue or submit a pull request.
+
+1.  Fork the Project
+2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the Branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+## License
+
+Distributed under the MIT License. See `LICENSE` file for more information.
+*(You should create a `LICENSE` file containing the MIT license text if you choose this license).*
+
+## Acknowledgements
+
+*   This project is based on the essay writing methodology detailed by **Jordan B. Peterson**. The goal is to make his structured approach more accessible and interactive.
+*   [Google AI Studio](https://aistudio.google.com/) for providing the Gemini API.
+*   [Create React App](https://create-react-app.dev/)
+
+---
+IGNORE_WHEN_COPYING_START
+content_copy
+download
+Use code with caution.
+IGNORE_WHEN_COPYING_END
