@@ -1,4 +1,4 @@
-// api/rewrite.ts
+//pages/api/aiSuggestions.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // This is the environment variable you set in Vercel's dashboard
