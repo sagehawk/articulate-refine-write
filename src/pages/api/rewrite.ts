@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ message: 'Server configuration error' });
   }
 
-  const modelName = 'gemini-2.0-flash-001';
+  const modelName = 'gemini-2.0-flash-lite';
   // Use the API key in the server-to-server call
   const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
 
