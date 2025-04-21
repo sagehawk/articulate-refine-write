@@ -52,9 +52,6 @@ Progress is saved locally in the browser, allowing users to work on multiple ess
 
 ![Homepage Screenshot](https://github.com/user-attachments/assets/c7f27236-d8dd-4e04-bea7-16f409d827c4)
 
-**Example Placeholder:**
-
-![Homepage Screenshot](placeholder-homepage.png)
 
 ## Getting Started
 
