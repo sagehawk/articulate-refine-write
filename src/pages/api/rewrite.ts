@@ -22,7 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ message: 'Server configuration error' });
   }
 
-  const modelName = 'gemini-2.0-flash-lite';
+  // Use the Lite model as discussed
+  const modelName = 'gemini-2.0-flash-lite'; // Changed from 'gemini-2.0-flash-001'
+
   // Use the API key in the server-to-server call
   const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -56,7 +58,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const suggestionsText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     // Split into lines and filter out empty ones
     const suggestions = suggestionsText.split('\n').filter(line => line.trim());
-
 
     // Send the suggestions back to your frontend
     res.status(200).json({ suggestions: suggestions }); // Send an array of strings
