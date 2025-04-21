@@ -16,81 +16,107 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
   
+  // Always ensure we set the correct content type for JSON responses
+  res.setHeader('Content-Type', 'application/json');
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   try {
+    console.log('API function called with body:', req.body);
     const { sentence } = req.body;
 
     if (!sentence) {
-      return res.status(400).json({ message: 'Missing sentence' });
+      return res.status(400).json({ message: 'Missing sentence parameter' });
     }
 
     if (!GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY environment variable not set.');
-      // Avoid exposing the exact error to the client for security
-      return res.status(500).json({ message: 'Server configuration error' });
+      // Return a proper JSON error response
+      return res.status(500).json({ 
+        message: 'Server configuration error - missing API key',
+        suggestions: [] 
+      });
     }
 
     // Use the Lite model as discussed
     const modelName = 'gemini-2.0-flash-lite'; 
 
-    // Use the API key in the server-to-server call
-    const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
-
-    const requestBody = {
-      contents: [{
-        role: 'user',
-        parts: [{
-          text: `Please provide 3 alternative rewrites for the following sentence, making it clearer, more concise, and more engaging. Focus on improving the flow and impact while maintaining the original meaning. Format each suggestion on a new line starting with a number.\nSentence: ${sentence}\nRewrites:`
-        }]
-      }]
-    };
-
     console.log('Calling Gemini API with sentence:', sentence);
     
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    try {
+      // Use the API key in the server-to-server call
+      const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini API response not OK:', response.status, errorText);
-      return res.status(response.status).json({ 
-        message: `Gemini API error: ${response.status}`,
-        error: errorText
+      const requestBody = {
+        contents: [{
+          role: 'user',
+          parts: [{
+            text: `Please provide 3 alternative rewrites for the following sentence, making it clearer, more concise, and more engaging. Focus on improving the flow and impact while maintaining the original meaning. Format each suggestion on a new line starting with a number.\nSentence: ${sentence}\nRewrites:`
+          }]
+        }]
+      };
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Gemini API response not OK:', response.status, errorText);
+        
+        return res.status(response.status).json({ 
+          message: `Gemini API error: ${response.status}`,
+          error: errorText,
+          suggestions: [] 
+        });
+      }
+
+      const data = await response.json();
+      console.log('Gemini API response:', JSON.stringify(data).substring(0, 200) + '...');
+
+      // Check for errors from the Gemini API itself
+      if (data.error) {
+        console.error('Gemini API error:', data.error);
+        return res.status(500).json({ 
+          message: 'Gemini API error', 
+          error: data.error,
+          suggestions: [] 
+        });
+      }
+
+      // Extract the suggestions from the Gemini response
+      const suggestionsText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      // Split into lines and filter out empty ones
+      const suggestions = suggestionsText.split('\n')
+        .filter(line => line.trim())
+        .map(line => line.replace(/^\d+[\.\)]\s*/, '').trim()); // Remove numbering
+      
+      console.log('Extracted suggestions:', suggestions);
+
+      // Send the suggestions back to your frontend
+      return res.status(200).json({ suggestions: suggestions });
+
+    } catch (fetchError) {
+      console.error('Error calling Gemini API:', fetchError);
+      return res.status(500).json({ 
+        message: 'Error calling Gemini API', 
+        error: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
+        suggestions: [] 
       });
     }
 
-    const data = await response.json();
-    console.log('Gemini API response:', data);
-
-    // Check for errors from the Gemini API itself
-    if (data.error) {
-      console.error('Gemini API error:', data.error);
-      return res.status(500).json({ message: 'Gemini API error', error: data.error });
-    }
-
-    // Extract the suggestions from the Gemini response
-    const suggestionsText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    // Split into lines and filter out empty ones
-    const suggestions = suggestionsText.split('\n').filter(line => line.trim());
-    
-    console.log('Extracted suggestions:', suggestions);
-
-    // Send the suggestions back to your frontend
-    return res.status(200).json({ suggestions: suggestions }); // Send an array of strings
-
   } catch (error) {
-    console.error('Error calling Gemini API from serverless function:', error);
+    console.error('Error in API function:', error);
     return res.status(500).json({ 
       message: 'Internal server error', 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      suggestions: [] 
     });
   }
 }

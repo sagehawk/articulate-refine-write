@@ -2,8 +2,19 @@
 // Client-side function to call our serverless function
 export const getAISuggestions = async (sentence: string): Promise<string[]> => {
   try {
-    // Make sure we're using a fully-qualified URL path
-    const response = await fetch('/api/aiSuggestions', {
+    console.log('Sending request to AI suggestions API with sentence:', sentence);
+    
+    // Determine base URL based on environment
+    const isProduction = window.location.hostname.includes('vercel.app');
+    // In production, use the full URL to the API endpoint (assuming it's deployed to Vercel)
+    const apiUrl = isProduction 
+      ? `${window.location.origin}/api/aiSuggestions` 
+      : '/api/aiSuggestions';
+    
+    console.log('Using API URL:', apiUrl);
+    
+    // Make the request
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -16,24 +27,35 @@ export const getAISuggestions = async (sentence: string): Promise<string[]> => {
 
     // First check if the response is ok before trying to parse JSON
     if (!response.ok) {
-      // Try to get error details if available
       let errorMessage = 'Failed to get AI suggestions';
-      const contentType = response.headers.get('content-type');
       
-      if (contentType && contentType.includes('application/json')) {
-        try {
+      try {
+        // Try to parse as JSON first
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
-        } catch (parseError) {
-          console.error('Error parsing JSON error response:', parseError);
+        } else {
+          // If not JSON, just use the status text and log the text content
+          const textContent = await response.text();
+          console.error('Non-JSON error response:', textContent);
+          errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
         }
-      } else {
-        // If not JSON, just use the status text
-        errorMessage = `${errorMessage}: ${response.status} ${response.statusText}`;
-        console.error('Non-JSON error response:', await response.text());
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
       }
       
       throw new Error(errorMessage);
+    }
+
+    // Check for HTML response (which would indicate we're getting a page instead of JSON)
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+      console.error('Received HTML response instead of JSON');
+      const htmlContent = await response.text();
+      console.log('HTML response preview:', htmlContent.substring(0, 100));
+      throw new Error('Received HTML instead of JSON data from the server');
     }
 
     // Parse the successful response
