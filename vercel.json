@@ -11,7 +11,8 @@
     ],
     "functions": {
       "api/**/*.cts": {
-        "runtime": "@vercel/node@2.8.0"
+        "runtime": "@vercel/node@2.8.0",
+        "handler": "api/rewrite.cjs:handler"
       }
     },
     "build": {
