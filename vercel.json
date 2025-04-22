@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+      {
+        "source": "/api/aiSuggestions",
+        "destination": "/api/aiSuggestions.cjs"
+      },
+       {
+        "source": "/api/rewrite",
+        "destination": "/api/rewrite.cjs"
+      }
+    ]
+}
