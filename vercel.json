@@ -4,9 +4,19 @@
         "source": "/api/aiSuggestions",
         "destination": "/api/aiSuggestions.cjs"
       },
-       {
+      {
         "source": "/api/rewrite",
         "destination": "/api/rewrite.cjs"
       }
-    ]
-}
+    ],
+    "functions": {
+      "api/**/*.cts": {
+         "runtime": "node:18.x"
+      }
+    },
+    "build": {
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
