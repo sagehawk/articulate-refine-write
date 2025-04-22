@@ -42,13 +42,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Use the Lite model as discussed - CORRECTED MODEL NAME
+    // Use the Lite model as discussed
     const modelName = 'gemini-2.0-flash-lite';
 
     console.log(`Calling Gemini API with model: ${modelName}, sentence: "${sentence}"`);
 
     try {
-      const url = `https://generative-ai.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      // Use the correct domain name and v1 endpoint - CORRECTED THIS LINE
+      const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
       console.log('Target URL:', url); // Log the full URL for debugging
 
       const requestBody = {
@@ -109,6 +110,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Check if candidates or parts are missing, which can happen if the prompt fails
        if (!data?.candidates?.[0]?.content?.parts?.[0]?.text) {
          console.error('Gemini response missing expected structure:', data);
+         // Also check for promptFeedback which might indicate why it failed
+         if (data.promptFeedback) {
+             console.error('Prompt feedback:', data.promptFeedback);
+         }
          return res.status(500).json({
             message: 'Gemini API did not return expected content structure. The prompt might have been rejected or failed.',
             error: data, // Include the full response data for debugging
