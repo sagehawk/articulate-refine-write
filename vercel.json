@@ -11,8 +11,13 @@
     ],
     "functions": {
       "api/**/*.cts": {
-        "runtime": "@vercel/node@2.8.0",
-        "handler": "api/rewrite.cjs:handler"
+         "runtime": "nodejs18.x"
+      },
+      "api/aiSuggestions.cts": {
+         "handler": "api/aiSuggestions.cjs:handler"
+      },
+      "api/rewrite.cts": {
+         "handler": "api/rewrite.cjs:handler"
       }
     },
     "build": {
@@ -21,4 +26,3 @@
       }
     }
   }
-  
