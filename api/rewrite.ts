@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Use the Lite model as discussed
-  const modelName = 'gemini-2.0-flash';
+  const modelName = 'gemini-1.5-flash';
 
   // Use the API key in the server-to-server call
   const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
