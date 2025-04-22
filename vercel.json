@@ -11,7 +11,7 @@
     ],
     "functions": {
       "api/**/*.cts": {
-         "runtime": "nodejs18.x"
+        "runtime": "@vercel/node@2.8.0"
       }
     },
     "build": {
@@ -20,3 +20,4 @@
       }
     }
   }
+  
