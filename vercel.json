@@ -1,22 +1,22 @@
 {
-    "rewrites": [
-      {
-        "source": "/api/aiSuggestions",
-        "destination": "/api/aiSuggestions"
-      },
-      {
-        "source": "/api/rewrite",
-        "destination": "/api/rewrite"
-      }
-    ],
-    "functions": {
-      "api/**/*.cts": {
-        "runtime": "@vercel/node@2.8.0"
-      }
+  "rewrites": [
+    {
+      "source": "/api/aiSuggestions",
+      "destination": "/api/aiSuggestions"
     },
-    "build": {
-      "env": {
-        "NODE_ENV": "production"
-      }
+    {
+      "source": "/api/rewrite",
+      "destination": "/api/rewrite"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@2.8.0"
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
     }
   }
+}
