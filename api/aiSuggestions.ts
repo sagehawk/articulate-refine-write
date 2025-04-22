@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Use the Lite model as discussed
-    const modelName = 'gemini-2.0-flash-lite'; 
+    const modelName = 'gemini-2.0-flash'; 
 
     console.log('Calling Gemini API with sentence:', sentence);
     
