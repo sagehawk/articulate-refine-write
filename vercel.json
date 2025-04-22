@@ -2,22 +2,16 @@
     "rewrites": [
       {
         "source": "/api/aiSuggestions",
-        "destination": "/api/aiSuggestions.cjs"
+        "destination": "/api/aiSuggestions"
       },
       {
         "source": "/api/rewrite",
-        "destination": "/api/rewrite.cjs"
+        "destination": "/api/rewrite"
       }
     ],
     "functions": {
       "api/**/*.cts": {
-         "runtime": "nodejs18.x"
-      },
-      "api/aiSuggestions.cts": {
-         "handler": "api/aiSuggestions.cjs:handler"
-      },
-      "api/rewrite.cts": {
-         "handler": "api/rewrite.cjs:handler"
+        "runtime": "@vercel/node@2.8.0"
       }
     },
     "build": {
