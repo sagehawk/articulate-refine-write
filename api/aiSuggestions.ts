@@ -48,8 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`Calling Gemini API with model: ${modelName}, sentence: "${sentence}"`);
 
     try {
-      // Use the v1beta endpoint, which is standard for this model
-      const url = `https://generative-ai.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `https://generative-ai.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
       console.log('Target URL:', url); // Log the full URL for debugging
 
       const requestBody = {
