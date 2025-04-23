@@ -75,11 +75,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     setEssayData(data);
     setEditableTitle(data.essay.title);
     
-    // Get essay content if available
     if (data.step5 && data.step5.paragraphs) {
       const content = data.step5.paragraphs.join("\n\n");
       setEssayContent(content);
-      setOriginalDraft(content); // Store original draft for comparison
+      setOriginalDraft(content);
     }
     
     if (data.essay.currentStep !== step) {
@@ -87,16 +86,13 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     }
   }, [navigate, step]);
 
-  // Set up autosave
   useEffect(() => {
     const autoSaveInterval = 60000; // 1 minute
     
-    // Clear any existing timer
     if (autosaveTimerId) {
       clearInterval(autosaveTimerId);
     }
     
-    // Set up new timer for autosave
     const timerId = setInterval(() => {
       if (essayData && contentChanged) {
         handleSave();
@@ -106,7 +102,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     
     setAutosaveTimerId(timerId);
     
-    // Cleanup on unmount
     return () => {
       if (autosaveTimerId) {
         clearInterval(autosaveTimerId);
@@ -114,10 +109,8 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     };
   }, [essayData, essayContent, contentChanged]);
 
-  // Set up keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S or Cmd+S to save
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
@@ -131,7 +124,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     };
   }, [essayData, essayContent]);
 
-  // Debounced save function for content changes
   const debouncedSave = useMemo(
     () => debounce(() => {
       if (essayData) {
@@ -142,7 +134,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     [essayData, essayContent]
   );
 
-  // Update essay content when it changes from child components
   useEffect(() => {
     if (contentChanged) {
       debouncedSave();
@@ -155,7 +146,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     setIsSaving(true);
     
     try {
-      // Update essay content if it exists
       if (essayContent && essayData.step5) {
         essayData.step5.paragraphs = essayContent.split("\n\n").filter(p => p.trim() !== "");
       }
@@ -192,7 +182,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     setEssayContent(newContent);
     setContentChanged(true);
     
-    // Update step5 data in essayData to keep it in sync
     if (essayData && essayData.step5) {
       const paragraphs = newContent.split("\n\n").filter(p => p.trim() !== "");
       essayData.step5.paragraphs = paragraphs;
@@ -247,7 +236,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     }
   };
   
-  // Format the last saved time
   const getFormattedSaveTime = () => {
     if (!lastSaved) return "";
     
@@ -284,7 +272,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           <div className="ml-2">
             {isSaving ? (
               <span className="text-slate-400 text-sm flex items-center">
-                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                <RefreshCcw className="h-3 w-3 animate-spin mr-1" />
                 Saving...
               </span>
             ) : lastSaved ? (
@@ -307,7 +295,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       </header>
 
       <main className="flex-grow flex">
-        {/* Left sidebar - Icons only */}
         <div className="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 shadow-sm">
           <Button 
             variant="ghost" 
@@ -413,12 +400,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           </Button>
         </div>
         
-        {/* Middle column - Content area */}
         <div className="w-1/2 overflow-auto p-6 bg-white border-r border-slate-200">
           {children}
         </div>
         
-        {/* Right column - Essay area */}
         <div className="w-1/2 overflow-auto p-6 bg-slate-50">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Essay Content</h2>
@@ -446,7 +431,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             </div>
           </div>
           
-          {/* Display either the current work or original draft */}
           {showOriginalDraft ? (
             <div className="prose max-w-none">
               <h3 className="text-amber-600 mb-4">Original Draft</h3>
