@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -53,15 +54,16 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <Card className="bg-gradient-to-br from-blue-50 to-slate-50 border-blue-100">
             <CardHeader>
-              <CardTitle className="text-blue-800">Write Better Essays</CardTitle>
+              <CardTitle className="text-blue-800">Interactive Essay Writing</CardTitle>
               <CardDescription className="text-blue-700">
-                Follow Jordan B. Peterson's step-by-step method
+                Our new split-screen interface makes writing easier than ever
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-slate-600 mb-6">
-                This interactive guide will walk you through a structured process to articulate your ideas 
-                clearly and refine your writing through multiple drafts.
+                Start writing immediately with our new split-screen editor. Navigate through 
+                Jordan B. Peterson's essay-writing process with intuitive controls on the left, 
+                while your essay takes shape on the right.
               </p>
               <Button 
                 onClick={handleStartNewEssay} 
@@ -137,17 +139,6 @@ const Index = () => {
           onEssayDeleted={loadEssays}
         />
       </main>
-      
-      <script>
-        {`
-          document.addEventListener('DOMContentLoaded', function() {
-            const badge = document.getElementById('lovable-badge');
-            if (badge) {
-              badge.style.display = 'none';
-            }
-          });
-        `}
-      </script>
     </div>
   );
 };

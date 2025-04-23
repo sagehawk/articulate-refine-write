@@ -70,27 +70,7 @@ const Step1 = () => {
       onSave={handleSave}
       canProceed={!!title.trim()}
     >
-      <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-6">
-        Essay Setup & Introduction
-      </h2>
-
       <div className="space-y-6">
-        <div>
-          <Label htmlFor="essay-title" className="text-base">
-            Essay Title <span className="text-red-500">*</span>
-          </Label>
-          <div className="mt-1.5">
-            <Input
-              id="essay-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter a descriptive title for your essay"
-              className="text-lg"
-              required
-            />
-          </div>
-        </div>
-        
         <Card>
           <CardHeader>
             <CardTitle>Why Write?</CardTitle>
@@ -105,12 +85,27 @@ const Step1 = () => {
               The quality of your thinking improves when you force yourself to write."
               - Jordan B. Peterson
             </p>
-            <p className="text-slate-600 mb-4">
+            <p className="text-slate-600">
               "Finished beats perfect. A complete essay that's imperfect is better 
               than a perfect essay that's never completed. Write, revise, and learn."
             </p>
           </CardContent>
         </Card>
+        
+        <div>
+          <Label htmlFor="essay-goal" className="text-base">
+            What's your goal for this essay? (Optional)
+          </Label>
+          <div className="mt-1.5">
+            <Input
+              id="essay-goal"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="e.g., To explore the concept of personal responsibility"
+              className="text-base"
+            />
+          </div>
+        </div>
       </div>
     </StepLayout>
   );
