@@ -19,6 +19,7 @@ import {
   Sparkles,
   BookCheck,
   Clock,
+  Check,
   LogOut,
 } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
