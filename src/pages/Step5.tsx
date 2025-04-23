@@ -58,8 +58,14 @@ const Step5 = () => {
     setWordCounts(newWordCounts);
     
     // Update essay data for real-time integration
-    if (essayData && essayData.step5) {
+    if (essayData) {
+      if (!essayData.step5) {
+        essayData.step5 = { paragraphs: [] };
+      }
+      
       essayData.step5.paragraphs = newParagraphs;
+      
+      // No need to call saveEssayData here as StepLayout will handle this with its debounced save
     }
   };
 

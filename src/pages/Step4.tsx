@@ -36,12 +36,22 @@ const Step4 = () => {
     setOutlineSentences(newOutlineSentences);
     
     // Update essay content in real-time based on outline
-    updateEssayFromOutline(newOutlineSentences);
+    if (essayData) {
+      updateEssayFromOutline(newOutlineSentences, essayData);
+      
+      // Create step4 data if it doesn't exist
+      if (!essayData.step4) {
+        essayData.step4 = {
+          outlineSentences: []
+        };
+      }
+      
+      // Update the outlineSentences in real-time
+      essayData.step4.outlineSentences = newOutlineSentences.filter(sentence => sentence.trim() !== "");
+    }
   };
 
-  const updateEssayFromOutline = (sentences: string[]) => {
-    if (!essayData) return;
-    
+  const updateEssayFromOutline = (sentences: string[], data: EssayData) => {
     // Filter out empty sentences
     const filteredSentences = sentences.filter(sentence => sentence.trim() !== "");
     
@@ -50,18 +60,15 @@ const Step4 = () => {
       return `${sentence} [Expand on this point further...]`;
     });
     
-    // Update essay data
-    if (essayData) {
-      // Create step5 data if it doesn't exist
-      if (!essayData.step5) {
-        essayData.step5 = {
-          paragraphs: []
-        };
-      }
-      
-      // Update paragraphs
-      essayData.step5.paragraphs = updatedParagraphs;
+    // Create step5 data if it doesn't exist
+    if (!data.step5) {
+      data.step5 = {
+        paragraphs: []
+      };
     }
+    
+    // Update paragraphs
+    data.step5.paragraphs = updatedParagraphs;
   };
 
   const handleSave = (data: EssayData) => {
@@ -74,7 +81,7 @@ const Step4 = () => {
       };
       
       // Also update the essay content when saving
-      updateEssayFromOutline(outlineSentences);
+      updateEssayFromOutline(outlineSentences, data);
       
       saveEssayData(data);
     }

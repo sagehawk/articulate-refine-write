@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step7Data } from "@/types/essay";
@@ -50,6 +51,9 @@ const Step7 = () => {
     const newOrder = [...paragraphOrder];
     [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
     setParagraphOrder(newOrder);
+    
+    // Update essay data in real-time
+    updateEssayWithNewOrder(newOrder);
   };
   
   const handleMoveDown = (index: number) => {
@@ -58,10 +62,38 @@ const Step7 = () => {
     const newOrder = [...paragraphOrder];
     [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
     setParagraphOrder(newOrder);
+    
+    // Update essay data in real-time
+    updateEssayWithNewOrder(newOrder);
+  };
+  
+  const updateEssayWithNewOrder = (newOrder: number[]) => {
+    if (!essayData || !essayData.step5 || !essayData.step5.paragraphs) return;
+    
+    // Create reordered paragraphs
+    const reorderedParagraphs = newOrder.map(originalIndex => 
+      paragraphs[originalIndex]
+    );
+    
+    // Update essayData with reordered paragraphs
+    essayData.step5.paragraphs = reorderedParagraphs;
+    
+    // Store the paragraph order in step7
+    if (!essayData.step7) {
+      essayData.step7 = { paragraphOrder: newOrder };
+    } else {
+      essayData.step7.paragraphOrder = newOrder;
+    }
   };
 
   const resetOrder = () => {
     setParagraphOrder([...originalOrder]);
+    
+    // Update essay data with original order
+    if (essayData) {
+      updateEssayWithNewOrder([...originalOrder]);
+    }
+    
     toast("Order Reset", {
       description: "Paragraph order has been reset to original.",
     });
@@ -74,9 +106,6 @@ const Step7 = () => {
       };
       
       saveEssayData(data);
-      toast("Progress Saved", {
-        description: "Your paragraph order has been saved.",
-      });
     }
   };
 

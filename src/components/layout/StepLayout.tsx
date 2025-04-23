@@ -1,7 +1,6 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ReactNode, useEffect, useState, useCallback } from "react";
+import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
 import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep, completeEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
 import { 
@@ -13,7 +12,12 @@ import {
   Edit, 
   RefreshCcw,
   ListChecks,
-  RefreshCw,
+  PenLine,
+  BookOpen,
+  ArrowUpDown,
+  Sparkles,
+  BookCheck,
+  Clock,
 } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
@@ -29,6 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { debounce } from "@/lib/utils";
 
 interface StepLayoutProps {
   children: ReactNode;
@@ -43,6 +48,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editableTitle, setEditableTitle] = useState("");
@@ -51,6 +57,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const [originalDraft, setOriginalDraft] = useState("");
   const [activeIconSection, setActiveIconSection] = useState<number>(step);
   const [autosaveTimerId, setAutosaveTimerId] = useState<NodeJS.Timeout | null>(null);
+  const [contentChanged, setContentChanged] = useState(false);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -91,8 +98,9 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     
     // Set up new timer for autosave
     const timerId = setInterval(() => {
-      if (essayData) {
+      if (essayData && contentChanged) {
         handleSave();
+        setContentChanged(false);
       }
     }, autoSaveInterval);
     
@@ -104,7 +112,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
         clearInterval(autosaveTimerId);
       }
     };
-  }, [essayData, essayContent]);
+  }, [essayData, essayContent, contentChanged]);
 
   // Set up keyboard shortcuts
   useEffect(() => {
@@ -122,6 +130,24 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [essayData, essayContent]);
+
+  // Debounced save function for content changes
+  const debouncedSave = useMemo(
+    () => debounce(() => {
+      if (essayData) {
+        handleSave();
+        setContentChanged(false);
+      }
+    }, 2000),
+    [essayData, essayContent]
+  );
+
+  // Update essay content when it changes from child components
+  useEffect(() => {
+    if (contentChanged) {
+      debouncedSave();
+    }
+  }, [contentChanged, debouncedSave]);
 
   const handleSave = useCallback(() => {
     if (!essayData) return;
@@ -142,9 +168,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       
       setTimeout(() => {
         setIsSaving(false);
-        toast("Essay saved", {
-          description: "Your essay has been saved"
-        });
+        setLastSaved(new Date());
       }, 500);
     } catch (error) {
       console.error("Error saving:", error);
@@ -164,12 +188,21 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   };
 
   const handleEssayContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEssayContent(e.target.value);
+    const newContent = e.target.value;
+    setEssayContent(newContent);
+    setContentChanged(true);
+    
+    // Update step5 data in essayData to keep it in sync
+    if (essayData && essayData.step5) {
+      const paragraphs = newContent.split("\n\n").filter(p => p.trim() !== "");
+      essayData.step5.paragraphs = paragraphs;
+    }
   };
 
   const handleDoOver = () => {
     if (window.confirm("Are you sure you want to restart? This will clear your current work.")) {
       setEssayContent("");
+      setContentChanged(true);
       toast("Essay reset", {
         description: "You can view the original draft by clicking the 'View Original' button"
       });
@@ -207,13 +240,18 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       essayData.essay.title = editableTitle;
       saveEssayData(essayData);
       setIsEditing(false);
-      toast("Title updated", {
-        description: "Your essay title has been updated."
-      });
+      setContentChanged(true);
     } else {
       setEditableTitle(essayData?.essay.title || "");
       setIsEditing(false);
     }
+  };
+  
+  // Format the last saved time
+  const getFormattedSaveTime = () => {
+    if (!lastSaved) return "";
+    
+    return lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -243,11 +281,18 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             </h1>
           )}
           
-          {isSaving && (
-            <span className="ml-2 text-slate-400">
-              <RefreshCw className="h-5 w-5 animate-spin" />
-            </span>
-          )}
+          <div className="ml-2">
+            {isSaving ? (
+              <span className="text-slate-400 text-sm flex items-center">
+                <RefreshCw className="h-3 w-3 animate-spin mr-1" />
+                Saving...
+              </span>
+            ) : lastSaved ? (
+              <span className="text-slate-400 text-sm">
+                Saved at {getFormattedSaveTime()}
+              </span>
+            ) : null}
+          </div>
         </div>
         
         <Button 
@@ -269,9 +314,9 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             size="icon" 
             className={`mb-4 ${activeIconSection === 1 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
             onClick={() => goToStep(1)}
-            title="Introduction"
+            title="Goals & Setup"
           >
-            <ListChecks className="h-5 w-5" />
+            <BookOpen className="h-5 w-5" />
           </Button>
           
           <Button 
@@ -281,7 +326,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             onClick={() => goToStep(3)}
             title="Topic & Reading"
           >
-            <FileText className="h-5 w-5" />
+            <BookCheck className="h-5 w-5" />
           </Button>
           
           <Button 
@@ -301,7 +346,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
             onClick={() => goToStep(5)}
             title="Draft"
           >
-            <Edit className="h-5 w-5" />
+            <PenLine className="h-5 w-5" />
           </Button>
           
           <Button 
@@ -317,11 +362,31 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           <Button 
             variant="ghost" 
             size="icon" 
+            className={`mb-4 ${activeIconSection === 7 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(7)}
+            title="Reorder"
+          >
+            <ArrowUpDown className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
             className={`mb-4 ${activeIconSection === 8 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
             onClick={() => goToStep(8)}
             title="Restructure"
           >
-            <RefreshCcw className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 9 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(9)}
+            title="Finalize"
+          >
+            <Clock className="h-5 w-5" />
           </Button>
 
           <div className="flex-grow"></div>
