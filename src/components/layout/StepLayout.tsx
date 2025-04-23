@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -18,6 +19,7 @@ import {
   Sparkles,
   BookCheck,
   Clock,
+  LogOut,
 } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
@@ -59,6 +61,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const [autosaveTimerId, setAutosaveTimerId] = useState<NodeJS.Timeout | null>(null);
   const [contentChanged, setContentChanged] = useState(false);
   const [syncingFromStepEdit, setSyncingFromStepEdit] = useState(false);
+  const [bibliography, setBibliography] = useState("");
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -82,6 +85,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       setOriginalDraft(content);
     }
     
+    if (data.step9 && data.step9.bibliography) {
+      setBibliography(data.step9.bibliography);
+    }
+    
     if (data.essay.currentStep !== step) {
       updateEssayStep(activeEssayId, step);
     }
@@ -92,6 +99,12 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       const newContent = essayData.step5.paragraphs.join("\n\n");
       if (newContent !== essayContent) {
         setEssayContent(newContent);
+      }
+    }
+    
+    if (essayData && essayData.step9 && !syncingFromStepEdit) {
+      if (essayData.step9.bibliography !== bibliography) {
+        setBibliography(essayData.step9.bibliography || "");
       }
     }
   }, [essayData]);
@@ -117,7 +130,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
         clearInterval(autosaveTimerId);
       }
     };
-  }, [essayData, essayContent, contentChanged]);
+  }, [essayData, essayContent, contentChanged, bibliography]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -132,7 +145,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [essayData, essayContent]);
+  }, [essayData, essayContent, bibliography]);
 
   const debouncedSave = useMemo(
     () => debounce(() => {
@@ -141,7 +154,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
         setContentChanged(false);
       }
     }, 2000),
-    [essayData, essayContent]
+    [essayData, essayContent, bibliography]
   );
 
   useEffect(() => {
@@ -149,6 +162,23 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       debouncedSave();
     }
   }, [contentChanged, debouncedSave]);
+  
+  // Extract first sentences from paragraphs
+  const extractFirstSentences = (text: string): string[] => {
+    // Split text into paragraphs
+    const paragraphs = text.split("\n\n").filter(p => p.trim() !== "");
+    
+    // Extract first sentence from each paragraph
+    return paragraphs.map(paragraph => {
+      // Look for first sentence ending with .!? and followed by a space or end of text
+      const match = paragraph.match(/^.+?[.!?](?:\s|$)/);
+      if (match) {
+        return match[0].trim();
+      }
+      // If no sentence ending found, return the whole paragraph if it's short, or first 50 chars
+      return paragraph.length <= 50 ? paragraph.trim() : paragraph.substring(0, 50).trim() + "...";
+    });
+  };
 
   const handleSave = useCallback(() => {
     if (!essayData) return;
@@ -157,8 +187,40 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     setSyncingFromStepEdit(true);
     
     try {
-      if (essayContent && essayData.step5) {
-        essayData.step5.paragraphs = essayContent.split("\n\n").filter(p => p.trim() !== "");
+      if (essayContent) {
+        // Split content into paragraphs by double newlines
+        const paragraphs = essayContent.split("\n\n").filter(p => p.trim() !== "");
+        
+        // Update Step5 data
+        if (!essayData.step5) {
+          essayData.step5 = { paragraphs: [] };
+        }
+        essayData.step5.paragraphs = paragraphs;
+        
+        // Extract first sentences for outline
+        const outlineSentences = extractFirstSentences(essayContent);
+        
+        // Update Step4 data
+        if (!essayData.step4) {
+          essayData.step4 = { outlineSentences: [] };
+        }
+        essayData.step4.outlineSentences = outlineSentences;
+      }
+      
+      // Update bibliography if we're on step 9
+      if (step === 9 && bibliography.trim()) {
+        if (!essayData.step9) {
+          essayData.step9 = {
+            bibliography: bibliography,
+            formattingChecks: {
+              doubleSpaced: false,
+              titlePage: false,
+              citationsChecked: false
+            }
+          };
+        } else {
+          essayData.step9.bibliography = bibliography;
+        }
       }
       
       if (onSave) {
@@ -180,7 +242,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
         description: "Please try again" 
       });
     }
-  }, [essayData, essayContent, onSave]);
+  }, [essayData, essayContent, onSave, step, bibliography]);
 
   const goToStep = (targetStep: number) => {
     if (!essayData) return;
@@ -194,20 +256,36 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     const newContent = e.target.value;
     setEssayContent(newContent);
     setContentChanged(true);
-    
-    if (essayData && essayData.step5) {
-      const paragraphs = newContent.split("\n\n").filter(p => p.trim() !== "");
-      essayData.step5.paragraphs = paragraphs;
-    }
+  };
+  
+  const handleBibliographyChange = (newBibliography: string) => {
+    setBibliography(newBibliography);
+    setContentChanged(true);
   };
 
   const handleDoOver = () => {
-    if (window.confirm("Are you sure you want to restart? This will clear your current work.")) {
-      setEssayContent("");
-      setContentChanged(true);
-      toast("Essay reset", {
-        description: "You can view the original draft by clicking the 'View Original' button"
-      });
+    if (window.confirm("Are you sure you want to restart? This will save your current work as a draft and let you start fresh.")) {
+      // Save current work as a draft before clearing
+      if (essayData && essayContent.trim()) {
+        const draft = {
+          content: essayContent,
+          createdAt: new Date().getTime(),
+          title: essayData.essay.title + " (Draft)"
+        };
+        
+        // Store the draft in localStorage
+        const draftsKey = `essay_drafts_${essayData.essay.id}`;
+        const existingDrafts = JSON.parse(localStorage.getItem(draftsKey) || "[]");
+        localStorage.setItem(draftsKey, JSON.stringify([...existingDrafts, draft]));
+        
+        // Clear the current content
+        setEssayContent("");
+        setContentChanged(true);
+        
+        toast("Draft saved", {
+          description: "Your work has been saved as a draft. You can start fresh now."
+        });
+      }
     }
   };
 
@@ -253,6 +331,38 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     if (!lastSaved) return "";
     
     return lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  const getFullEssayContent = () => {
+    let content = essayContent;
+    
+    // Add bibliography at the bottom if it exists
+    if (bibliography && bibliography.trim()) {
+      content += "\n\nBibliography:\n" + bibliography;
+    }
+    
+    return content;
+  };
+  
+  const handleComplete = () => {
+    if (!essayData) return;
+    
+    // Final save before completing
+    handleSave();
+    
+    if (onComplete) {
+      onComplete();
+    } else {
+      // Mark essay as complete
+      const activeEssayId = getActiveEssay();
+      if (activeEssayId) {
+        completeEssay(activeEssayId);
+        toast("Essay Completed!", {
+          description: "Your essay has been marked as complete.",
+        });
+        navigate("/");
+      }
+    }
   };
 
   return (
@@ -394,22 +504,11 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           <Button 
             variant="ghost" 
             size="icon" 
-            className="text-slate-600 hover:text-blue-600 hover:bg-blue-50 mb-4"
-            onClick={toggleOriginalDraft}
-            title={showOriginalDraft ? "Back to Current" : "View Original Draft"}
+            className="text-slate-600 hover:text-red-600 hover:bg-red-50"
+            onClick={handleExit}
+            title="Exit"
           >
-            <FileText className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-slate-600 hover:text-green-600 hover:bg-green-50"
-            onClick={handleSave}
-            disabled={isSaving}
-            title="Save Essay"
-          >
-            <Save className="h-5 w-5" />
+            <LogOut className="h-5 w-5" />
           </Button>
         </div>
         
@@ -431,6 +530,17 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
                 <RefreshCcw className="h-4 w-4 mr-1" />
                 Do Over
               </Button>
+              
+              {step === 9 && (
+                <Button
+                  size="sm"
+                  onClick={handleComplete}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Complete Essay
+                </Button>
+              )}
               
               <Button 
                 size="sm" 
@@ -459,6 +569,15 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
                 className="min-h-[calc(100vh-200px)] p-4 font-nunito text-base leading-relaxed"
                 placeholder="Start writing your essay here..."
               />
+              
+              {step === 9 && bibliography && (
+                <div className="mt-4 p-4 bg-white rounded-md border border-slate-200">
+                  <h3 className="font-semibold mb-2">Bibliography</h3>
+                  <div className="whitespace-pre-line text-slate-700">
+                    {bibliography}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

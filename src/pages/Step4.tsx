@@ -1,10 +1,11 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step4Data } from "@/types/essay";
 import { getActiveEssay, getEssayData, saveEssayData } from "@/utils/localStorage";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const Step4 = () => {
   const [outlineSentences, setOutlineSentences] = useState<string[]>(Array(15).fill(""));
@@ -75,8 +76,24 @@ const Step4 = () => {
     // Filter out empty sentences
     const filteredSentences = sentences.filter(sentence => sentence.trim() !== "");
     
-    // Create paragraphs from outline sentences - each sentence becomes a simple paragraph
-    const updatedParagraphs = filteredSentences.map(sentence => {
+    // Check if we have existing paragraphs to preserve
+    const existingParagraphs = data.step5?.paragraphs || [];
+    
+    // Create or update paragraphs from outline sentences
+    const updatedParagraphs = filteredSentences.map((sentence, index) => {
+      // Try to preserve the existing paragraph content if it exists
+      if (existingParagraphs[index]) {
+        // If the paragraph already starts with this sentence, keep it intact
+        if (existingParagraphs[index].startsWith(sentence)) {
+          return existingParagraphs[index];
+        }
+        
+        // Otherwise, replace the first sentence of the paragraph
+        const restOfParagraph = existingParagraphs[index].replace(/^.+?[.!?](?:\s|$)/g, '').trim();
+        return `${sentence} ${restOfParagraph}`;
+      }
+      
+      // Create a new paragraph if none exists
       return `${sentence} [Expand on this point further...]`;
     });
     
@@ -133,11 +150,17 @@ const Step4 = () => {
             Write 10-15 sentences that form the core argument of your essay. These sentences will become the 
             backbone of your essay, with each sentence potentially expanding into a paragraph in the next step.
           </p>
+          
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <Info className="h-5 w-5 text-blue-600" />
+            <AlertDescription className="text-blue-700">
+              You can also create your outline by writing directly in the Essay Content area. 
+              The first sentence of each paragraph will automatically become an outline sentence.
+            </AlertDescription>
+          </Alert>
+          
           <p className="text-slate-600 mb-4">
             Focus on clarity and logical flow. Each sentence should connect meaningfully to the ones before and after it.
-          </p>
-          <p className="text-slate-600 mb-4 font-medium">
-            Changes to your outline will automatically update your essay draft as you type.
           </p>
         </CardContent>
       </Card>

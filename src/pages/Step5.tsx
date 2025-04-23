@@ -52,10 +52,14 @@ const Step5 = () => {
       const currentParagraphs = [...paragraphs];
       const updatedParagraphs = essayData.step5.paragraphs;
       
-      // Only update if paragraphs are different
-      if (JSON.stringify(currentParagraphs) !== JSON.stringify(updatedParagraphs)) {
+      // Only update if paragraphs are different and we have outline sentences
+      if (JSON.stringify(currentParagraphs) !== JSON.stringify(updatedParagraphs) && 
+          essayData.step4?.outlineSentences) {
         setParagraphs(updatedParagraphs);
         setWordCounts(updatedParagraphs.map(countWords));
+        
+        // Also update outline sentences if needed
+        setOutlineSentences(essayData.step4.outlineSentences);
       }
     }
   }, [essayData, isInitialLoad]);
@@ -82,6 +86,18 @@ const Step5 = () => {
       
       essayData.step5.paragraphs = newParagraphs;
       
+      // If this paragraph starts with a different sentence now, update the outline
+      if (essayData.step4 && essayData.step4.outlineSentences && essayData.step4.outlineSentences[index]) {
+        // Extract first sentence from the paragraph
+        const match = value.match(/^.+?[.!?](?:\s|$)/);
+        if (match && match[0].trim() !== essayData.step4.outlineSentences[index]) {
+          const newOutlineSentences = [...essayData.step4.outlineSentences];
+          newOutlineSentences[index] = match[0].trim();
+          essayData.step4.outlineSentences = newOutlineSentences;
+          setOutlineSentences(newOutlineSentences);
+        }
+      }
+      
       // No need to call saveEssayData here as StepLayout will handle this with its debounced save
     }
   };
@@ -91,6 +107,16 @@ const Step5 = () => {
       data.step5 = {
         paragraphs: paragraphs
       };
+      
+      // Make sure outline sentences are updated too
+      if (data.step4 && paragraphs.length > 0) {
+        const firstSentences = paragraphs.map(paragraph => {
+          const match = paragraph.match(/^.+?[.!?](?:\s|$)/);
+          return match ? match[0].trim() : paragraph.substring(0, Math.min(50, paragraph.length)).trim();
+        });
+        
+        data.step4.outlineSentences = firstSentences;
+      }
       
       saveEssayData(data);
     }
