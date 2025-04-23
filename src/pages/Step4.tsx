@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const Step4 = () => {
   const [outlineSentences, setOutlineSentences] = useState<string[]>(Array(15).fill(""));
   const [essayData, setEssayData] = useState<EssayData | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -26,9 +27,28 @@ const Step4 = () => {
           }
           setOutlineSentences(existingSentences);
         }
+        
+        setIsInitialLoad(false);
       }
     }
   }, []);
+
+  // Listen for changes to essayData from StepLayout
+  useEffect(() => {
+    if (!isInitialLoad && essayData?.step4?.outlineSentences) {
+      const currentOutline = outlineSentences.filter(s => s.trim() !== "");
+      const updatedOutline = essayData.step4.outlineSentences;
+      
+      // Only update if outlines are different
+      if (JSON.stringify(currentOutline) !== JSON.stringify(updatedOutline)) {
+        const newOutline = [...updatedOutline];
+        while (newOutline.length < 15) {
+          newOutline.push("");
+        }
+        setOutlineSentences(newOutline);
+      }
+    }
+  }, [essayData, isInitialLoad]);
 
   const handleSentenceChange = (index: number, value: string) => {
     const newOutlineSentences = [...outlineSentences];

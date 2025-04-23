@@ -10,10 +10,17 @@ export function debounce<F extends (...args: any[]) => any>(
   func: F,
   delay: number
 ): (...args: Parameters<F>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: NodeJS.Timeout | null = null;
   
   return function(...args: Parameters<F>) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), delay);
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+    
+    timeout = setTimeout(() => {
+      func(...args);
+      timeout = null;
+    }, delay);
   };
 }

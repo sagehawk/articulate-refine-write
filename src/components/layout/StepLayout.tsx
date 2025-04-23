@@ -58,6 +58,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const [activeIconSection, setActiveIconSection] = useState<number>(step);
   const [autosaveTimerId, setAutosaveTimerId] = useState<NodeJS.Timeout | null>(null);
   const [contentChanged, setContentChanged] = useState(false);
+  const [syncingFromStepEdit, setSyncingFromStepEdit] = useState(false);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -85,6 +86,15 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       updateEssayStep(activeEssayId, step);
     }
   }, [navigate, step]);
+
+  useEffect(() => {
+    if (essayData && essayData.step5 && !syncingFromStepEdit) {
+      const newContent = essayData.step5.paragraphs.join("\n\n");
+      if (newContent !== essayContent) {
+        setEssayContent(newContent);
+      }
+    }
+  }, [essayData]);
 
   useEffect(() => {
     const autoSaveInterval = 60000; // 1 minute
@@ -144,6 +154,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     if (!essayData) return;
     
     setIsSaving(true);
+    setSyncingFromStepEdit(true);
     
     try {
       if (essayContent && essayData.step5) {
@@ -159,10 +170,12 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       setTimeout(() => {
         setIsSaving(false);
         setLastSaved(new Date());
+        setSyncingFromStepEdit(false);
       }, 500);
     } catch (error) {
       console.error("Error saving:", error);
       setIsSaving(false);
+      setSyncingFromStepEdit(false);
       toast("Error saving essay", { 
         description: "Please try again" 
       });

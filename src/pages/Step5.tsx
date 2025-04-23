@@ -13,6 +13,7 @@ const Step5 = () => {
   const [outlineSentences, setOutlineSentences] = useState<string[]>([]);
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [wordCounts, setWordCounts] = useState<number[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -39,9 +40,25 @@ const Step5 = () => {
             setWordCounts(Array(emptyParagraphs.length).fill(0));
           }
         }
+        
+        setIsInitialLoad(false);
       }
     }
   }, []);
+
+  // Listen for changes to essayData from StepLayout and sync paragraphs
+  useEffect(() => {
+    if (!isInitialLoad && essayData?.step5?.paragraphs) {
+      const currentParagraphs = [...paragraphs];
+      const updatedParagraphs = essayData.step5.paragraphs;
+      
+      // Only update if paragraphs are different
+      if (JSON.stringify(currentParagraphs) !== JSON.stringify(updatedParagraphs)) {
+        setParagraphs(updatedParagraphs);
+        setWordCounts(updatedParagraphs.map(countWords));
+      }
+    }
+  }, [essayData, isInitialLoad]);
 
   const countWords = (text: string): number => {
     return text.trim() ? text.trim().split(/\s+/).length : 0;
