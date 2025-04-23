@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step5Data } from "@/types/essay";
@@ -55,6 +56,11 @@ const Step5 = () => {
     const newWordCounts = [...wordCounts];
     newWordCounts[index] = countWords(value);
     setWordCounts(newWordCounts);
+    
+    // Update essay data for real-time integration
+    if (essayData && essayData.step5) {
+      essayData.step5.paragraphs = newParagraphs;
+    }
   };
 
   const handleSave = (data: EssayData) => {
@@ -108,7 +114,7 @@ const Step5 = () => {
               • Add supporting evidence, examples, or explanations<br />
               • Ensure logical flow within the paragraph<br />
               • Aim for 100 words minimum (shown in the word count)<br />
-              • You'll need to complete at least half your paragraphs to proceed
+              • Your changes will update the full essay in real-time
             </AlertDescription>
           </Alert>
           

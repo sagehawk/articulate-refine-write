@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import View from "./pages/View";
 
 // Import step pages
 import Step1 from "./pages/Step1";
@@ -39,6 +40,9 @@ const App = () => (
           <Route path="/step7" element={<Step7 />} />
           <Route path="/step8" element={<Step8 />} />
           <Route path="/step9" element={<Step9 />} />
+          
+          {/* Essay View */}
+          <Route path="/view" element={<View />} />
           
           {/* Redirect /steps to the first step */}
           <Route path="/steps" element={<Navigate to="/step1" replace />} />

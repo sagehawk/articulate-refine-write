@@ -1,10 +1,20 @@
 
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useCallback } from "react";
 import { getActiveEssay, getEssayData, saveEssayData, updateEssayStep, completeEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
-import { ArrowLeft, ArrowRight, Save, X, FileText, Edit, RefreshCcw, ListChecks } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Save, 
+  X, 
+  FileText, 
+  Edit, 
+  RefreshCcw,
+  ListChecks,
+  RefreshCw,
+} from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -19,7 +29,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 interface StepLayoutProps {
   children: ReactNode;
@@ -40,6 +49,8 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const [essayContent, setEssayContent] = useState("");
   const [showOriginalDraft, setShowOriginalDraft] = useState(false);
   const [originalDraft, setOriginalDraft] = useState("");
+  const [activeIconSection, setActiveIconSection] = useState<number>(step);
+  const [autosaveTimerId, setAutosaveTimerId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -69,7 +80,50 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     }
   }, [navigate, step]);
 
-  const handleSave = () => {
+  // Set up autosave
+  useEffect(() => {
+    const autoSaveInterval = 60000; // 1 minute
+    
+    // Clear any existing timer
+    if (autosaveTimerId) {
+      clearInterval(autosaveTimerId);
+    }
+    
+    // Set up new timer for autosave
+    const timerId = setInterval(() => {
+      if (essayData) {
+        handleSave();
+      }
+    }, autoSaveInterval);
+    
+    setAutosaveTimerId(timerId);
+    
+    // Cleanup on unmount
+    return () => {
+      if (autosaveTimerId) {
+        clearInterval(autosaveTimerId);
+      }
+    };
+  }, [essayData, essayContent]);
+
+  // Set up keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [essayData, essayContent]);
+
+  const handleSave = useCallback(() => {
     if (!essayData) return;
     
     setIsSaving(true);
@@ -88,7 +142,9 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       
       setTimeout(() => {
         setIsSaving(false);
-        toast("Essay saved successfully!");
+        toast("Essay saved", {
+          description: "Your essay has been saved"
+        });
       }, 500);
     } catch (error) {
       console.error("Error saving:", error);
@@ -97,13 +153,13 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
         description: "Please try again" 
       });
     }
-  };
+  }, [essayData, essayContent, onSave]);
 
   const goToStep = (targetStep: number) => {
     if (!essayData) return;
     
     handleSave();
-    
+    setActiveIconSection(targetStep);
     navigate(`/step${targetStep}`);
   };
 
@@ -163,28 +219,37 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <header className="bg-white shadow-sm border-b border-blue-100 py-4 px-6 flex items-center justify-between">
-        {isEditing ? (
-          <div className="flex-1 max-w-md">
-            <Input
-              value={editableTitle}
-              onChange={(e) => setEditableTitle(e.target.value)}
-              className="text-xl font-nunito font-bold"
-              onBlur={saveTitleEdit}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') saveTitleEdit();
-              }}
-              autoFocus
-            />
-          </div>
-        ) : (
-          <h1 
-            className="text-2xl font-nunito font-bold text-slate-800 cursor-pointer hover:text-blue-700"
-            onClick={startTitleEdit}
-            title="Click to edit title"
-          >
-            {essayData?.essay.title || "Essay"}
-          </h1>
-        )}
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <div className="flex-1 max-w-md">
+              <Input
+                value={editableTitle}
+                onChange={(e) => setEditableTitle(e.target.value)}
+                className="text-xl font-nunito font-bold"
+                onBlur={saveTitleEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveTitleEdit();
+                }}
+                autoFocus
+              />
+            </div>
+          ) : (
+            <h1 
+              className="text-2xl font-nunito font-bold text-slate-800 cursor-pointer hover:text-blue-700"
+              onClick={startTitleEdit}
+              title="Click to edit title"
+            >
+              {essayData?.essay.title || "Essay"}
+            </h1>
+          )}
+          
+          {isSaving && (
+            <span className="ml-2 text-slate-400">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+            </span>
+          )}
+        </div>
+        
         <Button 
           variant="ghost" 
           size="icon" 
@@ -197,132 +262,144 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       </header>
 
       <main className="flex-grow flex">
-        <ResizablePanelGroup direction="horizontal" className="w-full">
-          {/* Left side - Navigation panel */}
-          <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-white border-r border-slate-200">
-            <div className="p-4 h-full flex flex-col">
-              <div className="space-y-3 flex-grow">
-                <h2 className="font-semibold text-slate-700 mb-4">Essay Steps</h2>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 mb-2"
-                  onClick={() => goToStep(1)}
-                  data-active={step === 1}
-                >
-                  <ListChecks className="h-5 w-5" />
-                  <span>Introduction</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 mb-2"
-                  onClick={() => goToStep(3)}
-                  data-active={step === 3}
-                >
-                  <FileText className="h-5 w-5" />
-                  <span>Topic & Reading</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 mb-2"
-                  onClick={() => goToStep(4)}
-                  data-active={step === 4}
-                >
-                  <ListChecks className="h-5 w-5" />
-                  <span>Outline</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 mb-2"
-                  onClick={() => goToStep(5)}
-                  data-active={step === 5}
-                >
-                  <Edit className="h-5 w-5" />
-                  <span>Draft</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 mb-2"
-                  onClick={() => goToStep(6)}
-                  data-active={step === 6}
-                >
-                  <Edit className="h-5 w-5" />
-                  <span>Refine</span>
-                </Button>
-              </div>
+        {/* Left sidebar - Icons only */}
+        <div className="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 shadow-sm">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 1 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(1)}
+            title="Introduction"
+          >
+            <ListChecks className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 3 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(3)}
+            title="Topic & Reading"
+          >
+            <FileText className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 4 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(4)}
+            title="Outline"
+          >
+            <ListChecks className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 5 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(5)}
+            title="Draft"
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 6 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(6)}
+            title="Refine"
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className={`mb-4 ${activeIconSection === 8 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
+            onClick={() => goToStep(8)}
+            title="Restructure"
+          >
+            <RefreshCcw className="h-5 w-5" />
+          </Button>
+
+          <div className="flex-grow"></div>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-slate-600 hover:text-blue-600 hover:bg-blue-50 mb-4"
+            onClick={toggleOriginalDraft}
+            title={showOriginalDraft ? "Back to Current" : "View Original Draft"}
+          >
+            <FileText className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-slate-600 hover:text-green-600 hover:bg-green-50"
+            onClick={handleSave}
+            disabled={isSaving}
+            title="Save Essay"
+          >
+            <Save className="h-5 w-5" />
+          </Button>
+        </div>
+        
+        {/* Middle column - Content area */}
+        <div className="w-1/2 overflow-auto p-6 bg-white border-r border-slate-200">
+          {children}
+        </div>
+        
+        {/* Right column - Essay area */}
+        <div className="w-1/2 overflow-auto p-6 bg-slate-50">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Essay Content</h2>
+            
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDoOver}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                <RefreshCcw className="h-4 w-4 mr-1" />
+                Do Over
+              </Button>
               
-              <div className="pt-4 border-t border-slate-200 space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 text-amber-600"
-                  onClick={toggleOriginalDraft}
-                >
-                  <FileText className="h-5 w-5" />
-                  <span>{showOriginalDraft ? "Back to Current" : "View Original"}</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-3 text-red-600"
-                  onClick={handleDoOver}
-                >
-                  <RefreshCcw className="h-5 w-5" />
-                  <span>Do Over</span>
-                </Button>
-                
-                <Button 
-                  className="w-full justify-start gap-3 bg-blue-600 hover:bg-blue-700"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  <Save className="h-5 w-5" />
-                  <span>{isSaving ? "Saving..." : "Save Essay"}</span>
-                </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+          
+          {/* Display either the current work or original draft */}
+          {showOriginalDraft ? (
+            <div className="prose max-w-none">
+              <h3 className="text-amber-600 mb-4">Original Draft</h3>
+              <div className="whitespace-pre-wrap bg-amber-50 p-6 rounded-lg border border-amber-200">
+                {originalDraft || "No original draft available."}
               </div>
             </div>
-          </ResizablePanel>
-          
-          <ResizableHandle withHandle />
-          
-          {/* Right side - Essay content */}
-          <ResizablePanel defaultSize={80}>
-            <div className="h-full flex flex-col p-6 overflow-auto">
-              <div className="flex-grow">
-                {/* Display either the current work or original draft */}
-                {showOriginalDraft ? (
-                  <div className="prose max-w-none">
-                    <h2 className="text-amber-600 mb-4">Original Draft</h2>
-                    <div className="whitespace-pre-wrap bg-amber-50 p-6 rounded-lg border border-amber-200">
-                      {originalDraft || "No original draft available."}
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Show step-specific content */}
-                    <div className="mb-6">
-                      {children}
-                    </div>
-                    
-                    {/* Editable essay area */}
-                    <div className="mt-6">
-                      <h2 className="text-xl font-semibold mb-2">Essay Content</h2>
-                      <Textarea 
-                        value={essayContent}
-                        onChange={handleEssayContentChange}
-                        className="min-h-[400px] p-4 font-nunito text-base leading-relaxed"
-                        placeholder="Start writing your essay here..."
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+          ) : (
+            <div className="mt-2">
+              <Textarea 
+                value={essayContent}
+                onChange={handleEssayContentChange}
+                className="min-h-[calc(100vh-200px)] p-4 font-nunito text-base leading-relaxed"
+                placeholder="Start writing your essay here..."
+              />
             </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          )}
+        </div>
       </main>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

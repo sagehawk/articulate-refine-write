@@ -34,6 +34,34 @@ const Step4 = () => {
     const newOutlineSentences = [...outlineSentences];
     newOutlineSentences[index] = value;
     setOutlineSentences(newOutlineSentences);
+    
+    // Update essay content in real-time based on outline
+    updateEssayFromOutline(newOutlineSentences);
+  };
+
+  const updateEssayFromOutline = (sentences: string[]) => {
+    if (!essayData) return;
+    
+    // Filter out empty sentences
+    const filteredSentences = sentences.filter(sentence => sentence.trim() !== "");
+    
+    // Create paragraphs from outline sentences - each sentence becomes a simple paragraph
+    const updatedParagraphs = filteredSentences.map(sentence => {
+      return `${sentence} [Expand on this point further...]`;
+    });
+    
+    // Update essay data
+    if (essayData) {
+      // Create step5 data if it doesn't exist
+      if (!essayData.step5) {
+        essayData.step5 = {
+          paragraphs: []
+        };
+      }
+      
+      // Update paragraphs
+      essayData.step5.paragraphs = updatedParagraphs;
+    }
   };
 
   const handleSave = (data: EssayData) => {
@@ -44,6 +72,9 @@ const Step4 = () => {
       data.step4 = {
         outlineSentences: filteredSentences
       };
+      
+      // Also update the essay content when saving
+      updateEssayFromOutline(outlineSentences);
       
       saveEssayData(data);
     }
@@ -77,6 +108,9 @@ const Step4 = () => {
           </p>
           <p className="text-slate-600 mb-4">
             Focus on clarity and logical flow. Each sentence should connect meaningfully to the ones before and after it.
+          </p>
+          <p className="text-slate-600 mb-4 font-medium">
+            Changes to your outline will automatically update your essay draft as you type.
           </p>
         </CardContent>
       </Card>
