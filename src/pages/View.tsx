@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,9 +22,18 @@ const View = () => {
 
   const getParagraphs = () => {
     if (!essayData) return [];
-    return essayData.step8?.newParagraphs || 
-           essayData.step5?.paragraphs || 
-           [];
+    
+    // Use step8 paragraphs if available (after restructuring)
+    if (essayData.step8?.newParagraphs && essayData.step8.newParagraphs.length > 0) {
+      return essayData.step8.newParagraphs;
+    } 
+    
+    // Otherwise use the paragraphs from step5, which will include any reordering from step7
+    if (essayData.step5?.paragraphs && essayData.step5.paragraphs.length > 0) {
+      return essayData.step5.paragraphs;
+    }
+    
+    return [];
   };
 
   const handleRefine = () => {

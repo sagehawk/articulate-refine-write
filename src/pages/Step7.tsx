@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step7Data } from "@/types/essay";
@@ -51,13 +52,35 @@ const Step7 = () => {
     [newOrder[index], newOrder[index - 1]] = [newOrder[index - 1], newOrder[index]];
     setParagraphOrder(newOrder);
     
-    // Update essay data in real-time
+    // Update essay data and sync UI
     if (essayData) {
-      updateEssayWithNewOrder(newOrder);
-      const data = { ...essayData };
-      data.step7 = { paragraphOrder: newOrder };
-      saveEssayData(data);
-      setEssayData(data); // Update essayData state to trigger refresh
+      // Create a new data object to avoid mutation
+      const newEssayData = { ...essayData };
+      
+      // Reorder paragraphs based on new order
+      const reorderedParagraphs = newOrder.map(originalIndex => 
+        paragraphs[originalIndex]
+      );
+      
+      // Update paragraphs in step5 data
+      if (!newEssayData.step5) {
+        newEssayData.step5 = { paragraphs: reorderedParagraphs };
+      } else {
+        newEssayData.step5.paragraphs = reorderedParagraphs;
+      }
+      
+      // Store the paragraph order in step7
+      if (!newEssayData.step7) {
+        newEssayData.step7 = { paragraphOrder: newOrder };
+      } else {
+        newEssayData.step7.paragraphOrder = newOrder;
+      }
+      
+      // Save to localStorage
+      saveEssayData(newEssayData);
+      
+      // Update state to trigger UI refresh
+      setEssayData(newEssayData);
     }
   };
   
@@ -68,45 +91,70 @@ const Step7 = () => {
     [newOrder[index], newOrder[index + 1]] = [newOrder[index + 1], newOrder[index]];
     setParagraphOrder(newOrder);
     
-    // Update essay data in real-time
+    // Update essay data and sync UI
     if (essayData) {
-      updateEssayWithNewOrder(newOrder);
-      const data = { ...essayData };
-      data.step7 = { paragraphOrder: newOrder };
-      saveEssayData(data);
-      setEssayData(data); // Update essayData state to trigger refresh
+      // Create a new data object to avoid mutation
+      const newEssayData = { ...essayData };
+      
+      // Reorder paragraphs based on new order
+      const reorderedParagraphs = newOrder.map(originalIndex => 
+        paragraphs[originalIndex]
+      );
+      
+      // Update paragraphs in step5 data
+      if (!newEssayData.step5) {
+        newEssayData.step5 = { paragraphs: reorderedParagraphs };
+      } else {
+        newEssayData.step5.paragraphs = reorderedParagraphs;
+      }
+      
+      // Store the paragraph order in step7
+      if (!newEssayData.step7) {
+        newEssayData.step7 = { paragraphOrder: newOrder };
+      } else {
+        newEssayData.step7.paragraphOrder = newOrder;
+      }
+      
+      // Save to localStorage
+      saveEssayData(newEssayData);
+      
+      // Update state to trigger UI refresh
+      setEssayData(newEssayData);
     }
   };
   
-  const updateEssayWithNewOrder = (newOrder: number[]) => {
-    if (!essayData || !essayData.step5 || !essayData.step5.paragraphs) return;
-    
-    // Create reordered paragraphs
-    const reorderedParagraphs = newOrder.map(originalIndex => 
-      paragraphs[originalIndex]
-    );
-    
-    // Update essayData with reordered paragraphs
-    essayData.step5.paragraphs = reorderedParagraphs;
-    
-    // Store the paragraph order in step7
-    if (!essayData.step7) {
-      essayData.step7 = { paragraphOrder: newOrder };
-    } else {
-      essayData.step7.paragraphOrder = newOrder;
-    }
-  };
-
   const resetOrder = () => {
     setParagraphOrder([...originalOrder]);
     
     // Update essay data with original order
     if (essayData) {
-      const data = { ...essayData };
-      updateEssayWithNewOrder([...originalOrder]);
-      data.step7 = { paragraphOrder: [...originalOrder] };
-      saveEssayData(data);
-      setEssayData(data); // Update essayData state to trigger refresh
+      // Create a new data object to avoid mutation
+      const newEssayData = { ...essayData };
+      
+      // Reorder paragraphs based on original order
+      const reorderedParagraphs = originalOrder.map(originalIndex => 
+        paragraphs[originalIndex]
+      );
+      
+      // Update paragraphs in step5 data
+      if (!newEssayData.step5) {
+        newEssayData.step5 = { paragraphs: reorderedParagraphs };
+      } else {
+        newEssayData.step5.paragraphs = reorderedParagraphs;
+      }
+      
+      // Store the paragraph order in step7
+      if (!newEssayData.step7) {
+        newEssayData.step7 = { paragraphOrder: [...originalOrder] };
+      } else {
+        newEssayData.step7.paragraphOrder = [...originalOrder];
+      }
+      
+      // Save to localStorage
+      saveEssayData(newEssayData);
+      
+      // Update state to trigger UI refresh
+      setEssayData(newEssayData);
     }
     
     toast("Order Reset", {
@@ -116,9 +164,22 @@ const Step7 = () => {
 
   const handleSave = (data: EssayData) => {
     if (data) {
+      // Make sure we store the current paragraph order
       data.step7 = {
         paragraphOrder: paragraphOrder
       };
+      
+      // Reorder paragraphs based on current order
+      const reorderedParagraphs = paragraphOrder.map(originalIndex => 
+        paragraphs[originalIndex]
+      );
+      
+      // Update paragraphs in step5 data
+      if (!data.step5) {
+        data.step5 = { paragraphs: reorderedParagraphs };
+      } else {
+        data.step5.paragraphs = reorderedParagraphs;
+      }
       
       saveEssayData(data);
     }
