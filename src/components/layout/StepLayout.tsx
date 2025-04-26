@@ -44,9 +44,18 @@ interface StepLayoutProps {
   onSave?: (essayData: EssayData) => void;
   canProceed?: boolean;
   onComplete?: () => void;
+  disablePreviousSteps?: boolean;
 }
 
-export function StepLayout({ children, step, totalSteps, onSave, canProceed = true, onComplete }: StepLayoutProps) {
+export function StepLayout({ 
+  children, 
+  step, 
+  totalSteps, 
+  onSave, 
+  canProceed = true, 
+  onComplete,
+  disablePreviousSteps = false 
+}: StepLayoutProps) {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -351,6 +360,34 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   
   const isEssayContentReadOnly = step === 7;
 
+  const getStepTitle = (stepNumber: number) => {
+    switch (stepNumber) {
+      case 1: return "Goals & Setup";
+      case 3: return "Topic & Reading";
+      case 4: return "Outline";
+      case 5: return "Draft";
+      case 6: return "Refine";
+      case 7: return "Reorder";
+      case 8: return "Restructure";
+      case 9: return "Finalize";
+      default: return "";
+    }
+  };
+
+  const getStepIcon = (stepNumber: number) => {
+    switch (stepNumber) {
+      case 1: return <BookOpen className="h-5 w-5" />;
+      case 3: return <BookCheck className="h-5 w-5" />;
+      case 4: return <ListChecks className="h-5 w-5" />;
+      case 5: return <PenLine className="h-5 w-5" />;
+      case 6: return <Edit className="h-5 w-5" />;
+      case 7: return <ArrowUpDown className="h-5 w-5" />;
+      case 8: return <Sparkles className="h-5 w-5" />;
+      case 9: return <Clock className="h-5 w-5" />;
+      default: return null;
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <header className="bg-white shadow-sm border-b border-blue-100 py-4 px-6 flex items-center justify-between">
@@ -405,86 +442,22 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
 
       <main className="flex-grow flex">
         <div className="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 shadow-sm">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 1 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(1)}
-            title="Goals & Setup"
-          >
-            <BookOpen className="h-5 w-5" />
-          </Button>
+          {[1, 3, 4, 5, 6, 7, 8, 9].map((stepNumber) => (
+            <Button 
+              key={stepNumber}
+              variant="ghost" 
+              size="icon" 
+              className={`mb-4 ${
+                activeIconSection === stepNumber ? 'bg-blue-100 text-blue-600' : 'text-slate-600'
+              }`}
+              onClick={() => !disablePreviousSteps && goToStep(stepNumber)}
+              disabled={disablePreviousSteps && stepNumber < step}
+              title={getStepTitle(stepNumber)}
+            >
+              {getStepIcon(stepNumber)}
+            </Button>
+          ))}
           
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 3 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(3)}
-            title="Topic & Reading"
-          >
-            <BookCheck className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 4 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(4)}
-            title="Outline"
-          >
-            <ListChecks className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 5 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(5)}
-            title="Draft"
-          >
-            <PenLine className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 6 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(6)}
-            title="Refine"
-          >
-            <Edit className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 7 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(7)}
-            title="Reorder"
-          >
-            <ArrowUpDown className="h-5 w-5" />
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 8 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(8)}
-            title="Restructure"
-          >
-            <Sparkles className="h-5 w-5" />
-          </Button>
-
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className={`mb-4 ${activeIconSection === 9 ? 'bg-blue-100 text-blue-600' : 'text-slate-600'}`}
-            onClick={() => goToStep(9)}
-            title="Finalize"
-          >
-            <Clock className="h-5 w-5" />
-          </Button>
-
           <div className="flex-grow"></div>
           
           <Button 
@@ -582,16 +555,25 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Save changes before exiting?</AlertDialogTitle>
+            <AlertDialogTitle>Do you want to save your changes?</AlertDialogTitle>
             <AlertDialogDescription>
-              Do you want to save your changes before exiting?
+              Choose what you'd like to do with your changes before exiting.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleExitConfirm}>No, Exit</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExitWithSave}>
-              Yes, Save & Exit
-            </AlertDialogAction>
+            <Button variant="outline" onClick={() => setIsAlertOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExitConfirm}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Don't Save
+            </Button>
+            <Button onClick={handleExitWithSave} className="bg-green-600 hover:bg-green-700">
+              Save & Exit
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

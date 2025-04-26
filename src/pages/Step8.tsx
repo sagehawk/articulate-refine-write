@@ -1,12 +1,11 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useNavigate } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData } from "@/types/essay";
 import { getActiveEssay, getEssayData, saveEssayData } from "@/utils/localStorage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { RefreshCcw, Sparkles } from "lucide-react";
+import { RefreshCcw, Sparkles, Check } from "lucide-react";
 
 interface Draft {
   content: string;
@@ -18,6 +17,8 @@ const Step8 = () => {
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -189,66 +190,15 @@ const Step8 = () => {
             </Button>
             
             <Button 
-              onClick={() => setShowDrafts(!showDrafts)}
-              variant="outline"
-              className="w-full py-6 text-lg space-x-2"
+              onClick={() => navigate('/step9')}
+              className="w-full py-6 text-lg space-x-2 bg-green-600 hover:bg-green-700"
             >
-              <Sparkles className="h-5 w-5" />
-              <span>{showDrafts ? "Hide Saved Drafts" : "View Saved Drafts"}</span>
+              <Check className="h-5 w-5" />
+              <span>Finalize Essay</span>
             </Button>
           </div>
         </CardContent>
       </Card>
-
-      {showDrafts && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Saved Drafts</CardTitle>
-            <CardDescription>
-              You can restore a previous draft or delete drafts you no longer need.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {drafts.length === 0 ? (
-              <p className="text-slate-500 text-center py-4">
-                No drafts saved yet. Use the "Start Fresh" button to create a draft.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {drafts.map((draft, index) => (
-                  <div key={index} className="border border-slate-200 rounded-lg p-4 bg-white">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-medium text-lg">{draft.title}</h3>
-                      <span className="text-sm text-slate-500">{formatDate(draft.createdAt)}</span>
-                    </div>
-                    <div className="max-h-24 overflow-hidden text-sm text-slate-600 mb-3 bg-slate-50 p-2 rounded">
-                      {draft.content.substring(0, 200)}
-                      {draft.content.length > 200 ? '...' : ''}
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => deleteDraft(index)}
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Delete
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => restoreDraft(draft)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Restore Draft
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </StepLayout>
   );
 };
