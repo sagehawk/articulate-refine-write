@@ -52,13 +52,12 @@ const Step7 = () => {
     setParagraphOrder(newOrder);
     
     // Update essay data in real-time
-    updateEssayWithNewOrder(newOrder);
-    
-    // Save changes immediately to sync with essay content
     if (essayData) {
+      updateEssayWithNewOrder(newOrder);
       const data = { ...essayData };
       data.step7 = { paragraphOrder: newOrder };
       saveEssayData(data);
+      setEssayData(data); // Update essayData state to trigger refresh
     }
   };
   
@@ -70,13 +69,12 @@ const Step7 = () => {
     setParagraphOrder(newOrder);
     
     // Update essay data in real-time
-    updateEssayWithNewOrder(newOrder);
-    
-    // Save changes immediately to sync with essay content
     if (essayData) {
+      updateEssayWithNewOrder(newOrder);
       const data = { ...essayData };
       data.step7 = { paragraphOrder: newOrder };
       saveEssayData(data);
+      setEssayData(data); // Update essayData state to trigger refresh
     }
   };
   
@@ -104,7 +102,11 @@ const Step7 = () => {
     
     // Update essay data with original order
     if (essayData) {
+      const data = { ...essayData };
       updateEssayWithNewOrder([...originalOrder]);
+      data.step7 = { paragraphOrder: [...originalOrder] };
+      saveEssayData(data);
+      setEssayData(data); // Update essayData state to trigger refresh
     }
     
     toast("Order Reset", {
@@ -122,13 +124,10 @@ const Step7 = () => {
     }
   };
 
-  // Check if order has changed from original
   const hasReordered = JSON.stringify(paragraphOrder) !== JSON.stringify(originalOrder);
   
-  // Allow proceeding if there are paragraphs available
   const canProceed = paragraphs.length > 0;
 
-  // Get a brief preview of each paragraph (first 100 characters)
   const getParagraphPreview = (paragraph: string) => {
     if (!paragraph) return "Empty paragraph";
     const preview = paragraph.substring(0, 100);
