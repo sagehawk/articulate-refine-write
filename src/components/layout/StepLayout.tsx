@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -164,19 +163,14 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     }
   }, [contentChanged, debouncedSave]);
   
-  // Extract first sentences from paragraphs
   const extractFirstSentences = (text: string): string[] => {
-    // Split text into paragraphs
     const paragraphs = text.split("\n\n").filter(p => p.trim() !== "");
     
-    // Extract first sentence from each paragraph
     return paragraphs.map(paragraph => {
-      // Look for first sentence ending with .!? and followed by a space or end of text
       const match = paragraph.match(/^.+?[.!?](?:\s|$)/);
       if (match) {
         return match[0].trim();
       }
-      // If no sentence ending found, return the whole paragraph if it's short, or first 50 chars
       return paragraph.length <= 50 ? paragraph.trim() : paragraph.substring(0, 50).trim() + "...";
     });
   };
@@ -189,26 +183,21 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
     
     try {
       if (essayContent) {
-        // Split content into paragraphs by double newlines
         const paragraphs = essayContent.split("\n\n").filter(p => p.trim() !== "");
         
-        // Update Step5 data
         if (!essayData.step5) {
           essayData.step5 = { paragraphs: [] };
         }
         essayData.step5.paragraphs = paragraphs;
         
-        // Extract first sentences for outline
         const outlineSentences = extractFirstSentences(essayContent);
         
-        // Update Step4 data
         if (!essayData.step4) {
           essayData.step4 = { outlineSentences: [] };
         }
         essayData.step4.outlineSentences = outlineSentences;
       }
       
-      // Update bibliography if we're on step 9
       if (step === 9 && bibliography.trim()) {
         if (!essayData.step9) {
           essayData.step9 = {
@@ -266,7 +255,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
 
   const handleDoOver = () => {
     if (window.confirm("Are you sure you want to restart? This will save your current work as a draft and let you start fresh.")) {
-      // Save current work as a draft before clearing
       if (essayData && essayContent.trim()) {
         const draft = {
           content: essayContent,
@@ -274,12 +262,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           title: essayData.essay.title + " (Draft)"
         };
         
-        // Store the draft in localStorage
         const draftsKey = `essay_drafts_${essayData.essay.id}`;
         const existingDrafts = JSON.parse(localStorage.getItem(draftsKey) || "[]");
         localStorage.setItem(draftsKey, JSON.stringify([...existingDrafts, draft]));
         
-        // Clear the current content
         setEssayContent("");
         setContentChanged(true);
         
@@ -337,7 +323,6 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const getFullEssayContent = () => {
     let content = essayContent;
     
-    // Add bibliography at the bottom if it exists
     if (bibliography && bibliography.trim()) {
       content += "\n\nBibliography:\n" + bibliography;
     }
@@ -348,13 +333,11 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
   const handleComplete = () => {
     if (!essayData) return;
     
-    // Final save before completing
     handleSave();
     
     if (onComplete) {
       onComplete();
     } else {
-      // Mark essay as complete
       const activeEssayId = getActiveEssay();
       if (activeEssayId) {
         completeEssay(activeEssayId);
