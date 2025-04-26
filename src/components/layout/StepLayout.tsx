@@ -228,9 +228,7 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       console.error("Error saving:", error);
       setIsSaving(false);
       setSyncingFromStepEdit(false);
-      toast("Error saving essay", { 
-        description: "Please try again" 
-      });
+      toast("Error saving essay");
     }
   }, [essayData, essayContent, onSave, step, bibliography]);
 
@@ -348,6 +346,10 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
       }
     }
   };
+
+  const shouldShowEssayContent = step >= 6;
+  
+  const isEssayContentReadOnly = step === 7;
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -496,75 +498,85 @@ export function StepLayout({ children, step, totalSteps, onSave, canProceed = tr
           </Button>
         </div>
         
-        <div className="w-1/2 overflow-auto p-6 bg-white border-r border-slate-200">
+        <div className={`w-${shouldShowEssayContent ? '1/2' : 'full'} overflow-auto p-6 bg-white border-r border-slate-200`}>
           {children}
         </div>
         
-        <div className="w-1/2 overflow-auto p-6 bg-slate-50">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Essay Content</h2>
-            
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleDoOver}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <RefreshCcw className="h-4 w-4 mr-1" />
-                Do Over
-              </Button>
+        {shouldShowEssayContent && (
+          <div className="w-1/2 overflow-auto p-6 bg-slate-50">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Essay Content</h2>
               
-              {step === 9 && (
-                <Button
-                  size="sm"
-                  onClick={handleComplete}
-                  className="bg-green-600 hover:bg-green-700"
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleDoOver}
+                  className="text-red-600 border-red-200 hover:bg-red-50"
                 >
-                  <Check className="h-4 w-4 mr-1" />
-                  Complete Essay
+                  <RefreshCcw className="h-4 w-4 mr-1" />
+                  Do Over
                 </Button>
-              )}
-              
-              <Button 
-                size="sm" 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Save className="h-4 w-4 mr-1" />
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </div>
-          
-          {showOriginalDraft ? (
-            <div className="prose max-w-none">
-              <h3 className="text-amber-600 mb-4">Original Draft</h3>
-              <div className="whitespace-pre-wrap bg-amber-50 p-6 rounded-lg border border-amber-200">
-                {originalDraft || "No original draft available."}
+                
+                {step === 9 && (
+                  <Button
+                    size="sm"
+                    onClick={handleComplete}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Complete Essay
+                  </Button>
+                )}
+                
+                <Button 
+                  size="sm" 
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
               </div>
             </div>
-          ) : (
-            <div className="mt-2">
-              <Textarea 
-                value={essayContent}
-                onChange={handleEssayContentChange}
-                className="min-h-[calc(100vh-200px)] p-4 font-nunito text-base leading-relaxed"
-                placeholder="Start writing your essay here..."
-              />
-              
-              {step === 9 && bibliography && (
-                <div className="mt-4 p-4 bg-white rounded-md border border-slate-200">
-                  <h3 className="font-semibold mb-2">Bibliography</h3>
-                  <div className="whitespace-pre-line text-slate-700">
-                    {bibliography}
+            
+            {!showOriginalDraft ? (
+              <div className="mt-2">
+                <Textarea 
+                  value={essayContent}
+                  onChange={(e) => {
+                    handleEssayContentChange(e);
+                    if (step === 6) {
+                      handleSave();
+                    }
+                  }}
+                  readOnly={isEssayContentReadOnly}
+                  className={`min-h-[calc(100vh-200px)] p-4 font-nunito text-base leading-relaxed ${
+                    isEssayContentReadOnly ? 'bg-slate-100 cursor-not-allowed' : ''
+                  }`}
+                  placeholder={isEssayContentReadOnly ? "Content is read-only during paragraph reordering" : "Start writing your essay here..."}
+                />
+                
+                {step === 9 && bibliography && (
+                  <div className="mt-4 p-4 bg-white rounded-md border border-slate-200">
+                    <h3 className="font-semibold mb-2">Bibliography</h3>
+                    <div className="whitespace-pre-line text-slate-700">
+                      {bibliography}
+                    </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <div className="prose max-w-none">
+                <h3 className="text-amber-600 mb-4">Original Draft</h3>
+                <div className="whitespace-pre-wrap bg-amber-50 p-6 rounded-lg border border-amber-200">
+                  {originalDraft || "No original draft available."}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

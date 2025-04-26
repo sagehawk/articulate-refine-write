@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData, Step7Data } from "@/types/essay";
@@ -54,6 +53,13 @@ const Step7 = () => {
     
     // Update essay data in real-time
     updateEssayWithNewOrder(newOrder);
+    
+    // Save changes immediately to sync with essay content
+    if (essayData) {
+      const data = { ...essayData };
+      data.step7 = { paragraphOrder: newOrder };
+      saveEssayData(data);
+    }
   };
   
   const handleMoveDown = (index: number) => {
@@ -65,6 +71,13 @@ const Step7 = () => {
     
     // Update essay data in real-time
     updateEssayWithNewOrder(newOrder);
+    
+    // Save changes immediately to sync with essay content
+    if (essayData) {
+      const data = { ...essayData };
+      data.step7 = { paragraphOrder: newOrder };
+      saveEssayData(data);
+    }
   };
   
   const updateEssayWithNewOrder = (newOrder: number[]) => {
