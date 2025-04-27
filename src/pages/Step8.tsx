@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react"; // Removed useNavigate from here
-import { useNavigate } from "react-router-dom"; // Added import for useNavigate
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData } from "@/types/essay";
 import { getActiveEssay, getEssayData, saveEssayData } from "@/utils/localStorage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { RefreshCcw, Sparkles, Check } from "lucide-react";
+import { RefreshCcw, Check } from "lucide-react";
 
 interface Draft {
   content: string;
@@ -17,7 +17,7 @@ interface Draft {
 const Step8 = () => {
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [showDrafts, setShowDrafts] = useState(false); // Note: This state is defined but not used to show/hide drafts UI in this file.
+  const [showDrafts, setShowDrafts] = useState(false);
 
   const navigate = useNavigate();
 
@@ -46,7 +46,7 @@ const Step8 = () => {
 
       if (content.trim()) {
         // Save as draft
-        const draft: Draft = { // Added type annotation for clarity
+        const draft: Draft = {
           content: content,
           createdAt: new Date().getTime(),
           title: `${essayData.essay.title} (Draft ${drafts.length + 1})`
@@ -65,7 +65,7 @@ const Step8 = () => {
         setDrafts(newDrafts);
 
         // Clear current content
-        const updatedEssayData = { ...essayData }; // Create a copy to avoid direct mutation issues if needed elsewhere
+        const updatedEssayData = { ...essayData };
         if (updatedEssayData.step5) {
           updatedEssayData.step5.paragraphs = [];
         }
@@ -74,17 +74,15 @@ const Step8 = () => {
           updatedEssayData.step4.outlineSentences = [];
         }
 
-        setEssayData(updatedEssayData); // Update state
-        saveEssayData(updatedEssayData); // Save the cleared data
+        setEssayData(updatedEssayData);
+        saveEssayData(updatedEssayData);
 
         toast.success("Draft saved", {
           description: "Your work has been saved as a draft. You can now start fresh."
         });
 
-        // Redirect to an earlier step (e.g., Step 4 where the outline starts)
-        // navigate('/step4'); // Or wherever the "fresh start" should lead
-        // Or simply update the UI to reflect the cleared state
-
+        // Redirect to an earlier step
+        navigate('/step4');
       } else {
         toast("No content to save", {
           description: "Your essay doesn't have any content to save as a draft."
@@ -92,10 +90,6 @@ const Step8 = () => {
       }
     }
   };
-
-  // Note: restoreDraft and deleteDraft functions are defined but not used in the Step 8 UI.
-  // They seem more relevant for Step 9 where the Drafts Dialog exists.
-  // Keeping them here in case they are intended for future use on this step.
 
   const restoreDraft = (draft: Draft) => {
     if (!essayData) return;
@@ -111,7 +105,7 @@ const Step8 = () => {
       });
 
       // Update essay data
-      const updatedEssayData = { ...essayData }; // Create a copy
+      const updatedEssayData = { ...essayData };
       if (!updatedEssayData.step4) {
         updatedEssayData.step4 = { outlineSentences: [] };
       }
@@ -124,7 +118,7 @@ const Step8 = () => {
       updatedEssayData.step5.paragraphs = paragraphs;
 
       // Save the changes
-      setEssayData(updatedEssayData); // Update state
+      setEssayData(updatedEssayData);
       saveEssayData(updatedEssayData);
 
       toast.success("Draft restored", {
@@ -163,19 +157,15 @@ const Step8 = () => {
   };
 
   const handleSave = (data: EssayData) => {
-    // Step 8 doesn't seem to have specific data to save other than what's already
-    // managed within essayData (which is saved during handleDoOver/restoreDraft).
-    // This save might be triggered by StepLayout's own save mechanism if any.
-    // If Step 8 had its own form elements, they would be saved here.
     saveEssayData(data);
-    toast.info("Progress saved"); // Optional feedback
+    toast.info("Progress saved");
   };
 
   return (
     <StepLayout
       step={8}
       totalSteps={9}
-      onSave={() => essayData && handleSave(essayData)} // Pass current data if StepLayout calls onSave
+      onSave={() => essayData && handleSave(essayData)}
       canProceed={true}
     >
       <h2 className="text-2xl font-nunito font-bold text-slate-800 mb-6">
@@ -200,7 +190,7 @@ const Step8 = () => {
             <Button
               onClick={handleDoOver}
               className="w-full py-6 text-lg space-x-2 bg-blue-600 hover:bg-blue-700"
-              disabled={!essayData} // Disable if no essay data loaded
+              disabled={!essayData}
             >
               <RefreshCcw className="h-5 w-5" />
               <span>Start Fresh (Save Current as Draft)</span>
@@ -209,7 +199,7 @@ const Step8 = () => {
             <Button
               onClick={() => navigate('/step9')}
               className="w-full py-6 text-lg space-x-2 bg-green-600 hover:bg-green-700"
-              disabled={!essayData} // Disable if no essay data loaded
+              disabled={!essayData}
             >
               <Check className="h-5 w-5" />
               <span>Finalize Essay (Go to Step 9)</span>
@@ -217,10 +207,6 @@ const Step8 = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Optional: Add Drafts UI here if needed, using showDrafts state */}
-      {/* {showDrafts && drafts.length > 0 && ( ... UI to list/restore/delete drafts ... )} */}
-
     </StepLayout>
   );
 };

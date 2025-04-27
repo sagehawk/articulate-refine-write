@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react"; // Import useCallback
+
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
 import { EssayData } from "@/types/essay";
@@ -33,8 +34,6 @@ const defaultFormattingChecks = {
 const BIBLIOGRAPHY_HEADING = "Bibliography";
 
 const Step9 = () => {
-  console.log("--- Step9 component rendering ---"); // Log start of component function
-
   // --- State Definitions ---
   const [bibliography, setBibliography] = useState("");
   const [formattingChecks, setFormattingChecks] = useState(defaultFormattingChecks);
@@ -47,12 +46,10 @@ const Step9 = () => {
 
   // --- useEffect ---
   useEffect(() => {
-    console.log("Step9 useEffect running");
     const activeEssayId = getActiveEssay();
     if (activeEssayId) {
       const data = getEssayData(activeEssayId);
       if (data) {
-        console.log("Loaded essay data:", data);
         setEssayData(data);
         setBibliography(data.step9?.bibliography || "");
         setFormattingChecks({ ...defaultFormattingChecks, ...(data.step9?.formattingChecks || {}) });
@@ -67,22 +64,19 @@ const Step9 = () => {
         toast.error("No active essay selected.");
         navigate('/');
     }
-  }, [navigate]); // navigate dependency is correct
+  }, [navigate]); 
 
   // --- Event Handlers ---
   const handleBibliographyChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBibliography(e.target.value);
-  }, []); // No dependencies needed
+  }, []);
 
   const handleBibliographySourceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setBibliographySource(e.target.value);
-  }, []); // No dependencies needed
+  }, []);
 
-  console.log("Defining generateBibliographyEntry..."); // Log before definition
-
-  // --- generateBibliographyEntry wrapped in useCallback ---
+  // Correctly implemented generateBibliographyEntry with useCallback
   const generateBibliographyEntry = useCallback(() => {
-    console.log(">>> generateBibliographyEntry called!"); // Log when function executes
     if (!bibliographySource.trim()) {
         toast.info("Please enter a source to format.");
         return;
@@ -102,14 +96,48 @@ const Step9 = () => {
     });
     setBibliographySource(""); // Clear the input field
     toast.success("Bibliography entry added");
-  }, [bibliographySource]); // Dependency: uses bibliographySource state
-  // --- End useCallback ---
+  }, [bibliographySource]); 
 
-  console.log("generateBibliographyEntry defined:", typeof generateBibliographyEntry); // Log type after definition
+  // Add a function to insert bibliography into essay content
+  const insertBibliographyIntoEssay = useCallback(() => {
+    if (!essayData || !bibliography.trim()) {
+      toast.info("No bibliography to insert.");
+      return;
+    }
+    
+    const updatedEssayData = { ...essayData };
+    if (!updatedEssayData.step5) updatedEssayData.step5 = { paragraphs: [] };
+    
+    let paragraphs = [...updatedEssayData.step5.paragraphs || []];
+    
+    // Remove any existing bibliography heading and content
+    const bibHeadingIndex = paragraphs.findIndex(p => p.trim() === BIBLIOGRAPHY_HEADING);
+    if (bibHeadingIndex !== -1) {
+      paragraphs = paragraphs.slice(0, bibHeadingIndex);
+    }
+    
+    // Ensure there's a space before bibliography
+    if (paragraphs.length > 0 && paragraphs[paragraphs.length - 1].trim() !== "") {
+      paragraphs.push("");
+    }
+    
+    // Add bibliography heading and content
+    paragraphs.push(BIBLIOGRAPHY_HEADING);
+    paragraphs.push(bibliography);
+    
+    updatedEssayData.step5.paragraphs = paragraphs;
+    updatedEssayData.step9 = { 
+      ...updatedEssayData.step9 || {}, 
+      bibliography, 
+      formattingChecks 
+    };
+    
+    setEssayData(updatedEssayData);
+    saveEssayData(updatedEssayData);
+    toast.success("Bibliography inserted into essay");
+  }, [essayData, bibliography, formattingChecks]);
 
-  // Wrap other handlers in useCallback for consistency and dependency management
   const handleDoOver = useCallback(() => {
-    console.log("handleDoOver called");
     if (!essayData) return;
     if (window.confirm("Are you sure you want to restart? This will save your current work as a draft and let you start fresh.")) {
       const content = essayData.step5?.paragraphs ? essayData.step5.paragraphs.join("\n\n") : "";
@@ -127,13 +155,16 @@ const Step9 = () => {
         setBibliography("");
         setFormattingChecks(defaultFormattingChecks);
         saveEssayData(updatedEssayData);
-        toast.success("Draft saved"); setShowDraftsDialog(true);
-      } else { toast.warning("No content to save"); }
+        toast.success("Draft saved"); 
+        setShowDraftsDialog(true);
+        navigate('/step4'); // Navigate to step 4 to start fresh
+      } else { 
+        toast.warning("No content to save"); 
+      }
     }
-  }, [essayData, drafts]); // Dependencies: essayData, drafts
+  }, [essayData, drafts, navigate]); 
 
   const restoreDraft = useCallback((draft: Draft) => {
-    console.log("restoreDraft called for:", draft.title);
     if (!essayData) return;
     if (window.confirm("Are you sure you want to restore this draft? This will replace your current work.")) {
       const paragraphs = draft.content.split("\n\n").filter(p => p.trim());
@@ -152,14 +183,14 @@ const Step9 = () => {
         step9: { ...(essayData.step9 || {}), bibliography: restoredBibliography, formattingChecks }
       };
       saveEssayData(restoredData);
-      setEssayData(restoredData); // Update state after saving
+      setEssayData(restoredData); 
       setBibliography(restoredBibliography);
-      toast.success("Draft restored"); setShowDraftsDialog(false);
+      toast.success("Draft restored"); 
+      setShowDraftsDialog(false);
     }
-  }, [essayData, formattingChecks]); // Dependencies: essayData, formattingChecks
+  }, [essayData, formattingChecks]); 
 
   const deleteDraft = useCallback((index: number) => {
-    console.log("deleteDraft called for index:", index);
     if (window.confirm("Are you sure you want to delete this draft? This action cannot be undone.")) {
       const newDrafts = [...drafts];
       newDrafts.splice(index, 1);
@@ -168,22 +199,25 @@ const Step9 = () => {
       setDrafts(newDrafts);
       toast.success("Draft deleted");
     }
-  }, [drafts]); // Dependency: drafts
+  }, [drafts]); 
 
-  const formatDate = useCallback((timestamp: number): string => new Date(timestamp).toLocaleString(), []); // No dependencies
+  const formatDate = useCallback((timestamp: number): string => new Date(timestamp).toLocaleString(), []);
 
   const handleSave = useCallback((dataToSave: EssayData | null) => {
-    console.log("handleSave called");
     if (dataToSave) {
       const finalDataToSave = { ...dataToSave, step9: { bibliography, formattingChecks } };
       saveEssayData(finalDataToSave);
       toast.info("Progress saved");
-    } else { toast.error("Cannot save, no essay data loaded."); }
-  }, [bibliography, formattingChecks]); // Dependencies: bibliography, formattingChecks
+    } else { 
+      toast.error("Cannot save, no essay data loaded."); 
+    }
+  }, [bibliography, formattingChecks]);
 
   const handleComplete = useCallback(() => {
-    console.log("handleComplete called");
-    if (!essayData) { toast.error("Cannot complete, no essay data loaded."); return; }
+    if (!essayData) { 
+      toast.error("Cannot complete, no essay data loaded."); 
+      return; 
+    }
     const finalEssayData = JSON.parse(JSON.stringify(essayData)) as EssayData;
     if (!finalEssayData.step5) finalEssayData.step5 = { paragraphs: [] };
     const bibContent = bibliography.trim();
@@ -191,24 +225,26 @@ const Step9 = () => {
     const bibHeadingIndex = currentParagraphs.findIndex(p => p.trim() === BIBLIOGRAPHY_HEADING);
     if (bibHeadingIndex !== -1) currentParagraphs = currentParagraphs.slice(0, bibHeadingIndex);
     while (currentParagraphs.length > 0 && currentParagraphs[currentParagraphs.length - 1].trim() === "") currentParagraphs.pop();
-    if (bibContent) { currentParagraphs.push(""); currentParagraphs.push(BIBLIOGRAPHY_HEADING); currentParagraphs.push(bibContent); }
+    if (bibContent) { 
+      currentParagraphs.push(""); 
+      currentParagraphs.push(BIBLIOGRAPHY_HEADING); 
+      currentParagraphs.push(bibContent); 
+    }
     finalEssayData.step5.paragraphs = currentParagraphs;
     finalEssayData.step9 = { bibliography, formattingChecks };
     saveEssayData(finalEssayData);
     navigate('/');
     toast.success("Essay completed!");
-  }, [essayData, bibliography, formattingChecks, navigate]); // Dependencies: essayData, bibliography, formattingChecks, navigate
+  }, [essayData, bibliography, formattingChecks, navigate]);
 
-  const canProceed = true; // Keep as true
-
-  console.log("--- Rendering Step9 JSX ---"); // Log before return
+  const canProceed = true;
 
   return (
     <StepLayout
-      step={9} totalSteps={9}
+      step={9} 
+      totalSteps={9}
       onSave={() => handleSave(essayData)}
       canProceed={canProceed}
-      disablePreviousSteps={true}
     >
       <div className="space-y-6">
         <Card>
@@ -232,7 +268,7 @@ const Step9 = () => {
                         className="flex-grow"
                       />
                       <Button
-                        onClick={generateBibliographyEntry} // Calling the useCallback wrapped function
+                        onClick={generateBibliographyEntry}
                         className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                       >
                         <Upload className="h-4 w-4 mr-1" /> Format & Add
@@ -255,6 +291,15 @@ const Step9 = () => {
                      className="h-64"
                    />
                </div>
+               
+               {/* Insert Bibliography Button */}
+               <Button 
+                 onClick={insertBibliographyIntoEssay} 
+                 className="w-full bg-green-600 hover:bg-green-700"
+                 disabled={!bibliography.trim()}
+               >
+                 <Check className="h-4 w-4 mr-2" /> Insert Bibliography into Essay
+               </Button>
              </div>
            </CardContent>
         </Card>
@@ -277,7 +322,6 @@ const Step9 = () => {
 
       {/* Drafts Dialog */}
       <Dialog open={showDraftsDialog} onOpenChange={setShowDraftsDialog}>
-         {/* Dialog content remains the same */}
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Saved Drafts</DialogTitle>
