@@ -54,16 +54,16 @@ const Index = () => {
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <Card className="bg-gradient-to-br from-blue-50 to-slate-50 border-blue-100">
             <CardHeader>
-              <CardTitle className="text-blue-800">Interactive Essay Writing</CardTitle>
+              <CardTitle className="text-blue-800">Write Better, Think Better</CardTitle>
               <CardDescription className="text-blue-700">
-                Our new split-screen interface makes writing easier than ever
+                Follow Jordan B. Peterson's step-by-step method
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-slate-600 mb-6">
-                Start writing immediately with our new split-screen editor. Navigate through 
-                Jordan B. Peterson's essay-writing process with intuitive controls on the left, 
-                while your essay takes shape on the right.
+                This interactive guide will walk you through a structured
+                process to articulate your ideas clearly and refine your
+                writing through multiple drafts.
               </p>
               <Button 
                 onClick={handleStartNewEssay} 
