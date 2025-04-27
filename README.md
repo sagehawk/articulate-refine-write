@@ -44,13 +44,20 @@ Progress is saved locally in the browser, allowing users to work on multiple ess
 
 *   **Frontend:** React.js (`create-react-app`)
 *   **Routing:** React Router (`react-router-dom`)
-*   **AI:** Google Gemini 1.5 Flash API via `@google/generative-ai` SDK
+*   **AI:** Google Gemini 2.0 Flash API via `@google/generative-ai` SDK
 *   **Persistence:** Browser `localStorage` API
 *   **Styling:** CSS (Specify method if using Modules, Tailwind, Styled Components, etc.)
 
 ## Screenshots / Demo
 
 ![Homepage Screenshot](https://github.com/user-attachments/assets/c7f27236-d8dd-4e04-bea7-16f409d827c4)
+![Step 1](https://github.com/user-attachments/assets/aadaf0d2-f536-414d-bcb7-ca3c25c06c95)
+![Step 3](https://github.com/user-attachments/assets/8149f34e-688f-4aef-9e5e-cdd0b6a0da10)
+![Step 4](https://github.com/user-attachments/assets/c22d96ac-1c5d-438e-a29e-a164929ba5e9)
+![Step 5](https://github.com/user-attachments/assets/de0ca456-55f2-4991-a907-1e2ec7c36e54)
+![Step 6](https://github.com/user-attachments/assets/7d472772-5aaa-4028-b54f-aa4297e0aa22)
+![AI](https://github.com/user-attachments/assets/a5f7b4cd-1f63-41ab-81d7-ac5b4ca1e993)
+![Suggestions](https://github.com/user-attachments/assets/6f6bb26d-32e5-4341-bdfc-713416beba06)
 
 
 ## Getting Started
