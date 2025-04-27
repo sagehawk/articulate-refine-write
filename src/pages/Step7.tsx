@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate if needed for error handling/navigation
 import { StepLayout } from "@/components/layout/StepLayout";
@@ -147,9 +148,9 @@ const Step7 = () => {
   // --- Conditional Rendering ---
 
   if (isLoading) {
-    // Consistent loading state within StepLayout
+    // Consistent loading state within StepLayout - Fixed: Removed isLoading prop
     return (
-      <StepLayout step={7} totalSteps={9} isLoading={true}>
+      <StepLayout step={7} totalSteps={9}>
         <p>Loading Step 7...</p>
       </StepLayout>
     );
