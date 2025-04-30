@@ -646,17 +646,6 @@ export function StepLayout({
                   Preview
                 </Button>
                 
-                {step === 9 && (
-                  <Button
-                    size="sm"
-                    onClick={handleComplete}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Complete Essay
-                  </Button>
-                )}
-                
                 <Button 
                   size="sm" 
                   onClick={handleSave}
