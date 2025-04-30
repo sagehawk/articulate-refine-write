@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -71,7 +72,9 @@ export function StepLayout({
   const [contentChanged, setContentChanged] = useState(false);
   const [syncingFromStepEdit, setSyncingFromStepEdit] = useState(false);
   const [bibliography, setBibliography] = useState("");
-
+  const [navigateWarningOpen, setNavigateWarningOpen] = useState(false);
+  const [navigateTarget, setNavigateTarget] = useState<string>("");
+  
   useEffect(() => {
     const activeEssayId = getActiveEssay();
     if (!activeEssayId) {
@@ -117,6 +120,23 @@ export function StepLayout({
       }
     }
   }, [essayData]);
+
+  // Set up beforeunload event listener to warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (contentChanged) {
+        const message = "You have unsaved changes. Are you sure you want to leave?";
+        e.returnValue = message;
+        return message;
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [contentChanged]);
 
   useEffect(() => {
     const autoSaveInterval = 60000; // 1 minute
@@ -244,7 +264,11 @@ export function StepLayout({
   const goToStep = (targetStep: number) => {
     if (!essayData) return;
     
-    handleSave();
+    if (contentChanged) {
+      // Save current step before navigating
+      handleSave();
+    }
+    
     setActiveIconSection(targetStep);
     navigate(`/step${targetStep}`);
   };
@@ -255,7 +279,8 @@ export function StepLayout({
     setContentChanged(true);
   };
   
-  const handleBibliographyChange = (newBibliography: string) => {
+  const handleBibliographyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newBibliography = e.target.value;
     setBibliography(newBibliography);
     setContentChanged(true);
   };
@@ -293,7 +318,11 @@ export function StepLayout({
   };
 
   const handleExit = () => {
-    setIsAlertOpen(true);
+    if (contentChanged) {
+      setIsAlertOpen(true);
+    } else {
+      navigate("/");
+    }
   };
 
   const handleExitConfirm = () => {
@@ -356,13 +385,29 @@ export function StepLayout({
     }
   };
 
-  const shouldShowEssayContent = step >= 6;
+  // Function to synchronize content from the steps to the essay content panel
+  const syncContentFromSteps = useCallback(() => {
+    if (!essayData) return;
+    
+    // This function will be called by step components when they update content
+    // that should be reflected in the essay content panel
+    if (essayData.step5?.paragraphs) {
+      setEssayContent(essayData.step5.paragraphs.join("\n\n"));
+    }
+    
+    if (step === 9 && essayData.step9?.bibliography) {
+      setBibliography(essayData.step9.bibliography);
+    }
+  }, [essayData, step]);
+
+  const shouldShowEssayContent = step >= 4; // Show essay content from step 4 onwards
   
   const isEssayContentReadOnly = step === 7;
 
   const getStepTitle = (stepNumber: number) => {
     switch (stepNumber) {
       case 1: return "Goals & Setup";
+      case 2: return "Resolution Levels";
       case 3: return "Topic & Reading";
       case 4: return "Outline";
       case 5: return "Draft";
@@ -377,6 +422,7 @@ export function StepLayout({
   const getStepIcon = (stepNumber: number) => {
     switch (stepNumber) {
       case 1: return <BookOpen className="h-5 w-5" />;
+      case 2: return <FileText className="h-5 w-5" />;
       case 3: return <BookCheck className="h-5 w-5" />;
       case 4: return <ListChecks className="h-5 w-5" />;
       case 5: return <PenLine className="h-5 w-5" />;
@@ -442,7 +488,7 @@ export function StepLayout({
 
       <main className="flex-grow flex">
         <div className="w-16 bg-white border-r border-slate-200 flex flex-col items-center py-6 shadow-sm">
-          {[1, 3, 4, 5, 6, 7, 8, 9].map((stepNumber) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((stepNumber) => (
             <Button 
               key={stepNumber}
               variant="ghost" 
@@ -450,7 +496,14 @@ export function StepLayout({
               className={`mb-4 ${
                 activeIconSection === stepNumber ? 'bg-blue-100 text-blue-600' : 'text-slate-600'
               }`}
-              onClick={() => !disablePreviousSteps && goToStep(stepNumber)}
+              onClick={() => {
+                if (contentChanged) {
+                  setNavigateTarget(`/step${stepNumber}`);
+                  setNavigateWarningOpen(true);
+                } else {
+                  !disablePreviousSteps && goToStep(stepNumber);
+                }
+              }}
               disabled={disablePreviousSteps && stepNumber < step}
               title={getStepTitle(stepNumber)}
             >
@@ -518,27 +571,36 @@ export function StepLayout({
               <div className="mt-2">
                 <Textarea 
                   value={essayContent}
-                  onChange={(e) => {
-                    handleEssayContentChange(e);
-                    if (step === 6) {
+                  onChange={handleEssayContentChange}
+                  onBlur={() => {
+                    if (contentChanged) {
                       handleSave();
                     }
                   }}
                   readOnly={isEssayContentReadOnly}
-                  className={`min-h-[calc(100vh-200px)] p-4 font-nunito text-base leading-relaxed ${
+                  className={`min-h-[calc(100vh-280px)] p-4 font-nunito text-base leading-relaxed ${
                     isEssayContentReadOnly ? 'bg-slate-100 cursor-not-allowed' : ''
                   }`}
                   placeholder={isEssayContentReadOnly ? "Content is read-only during paragraph reordering" : "Start writing your essay here..."}
                 />
                 
-                {step === 9 && bibliography && (
-                  <div className="mt-4 p-4 bg-white rounded-md border border-slate-200">
+                {step === 9 && (
+                  <div className="mt-4">
                     <h3 className="font-semibold mb-2">Bibliography</h3>
-                    <div className="whitespace-pre-line text-slate-700">
-                      {bibliography}
-                    </div>
+                    <Textarea
+                      value={bibliography}
+                      onChange={handleBibliographyChange}
+                      onBlur={() => {
+                        if (contentChanged) {
+                          handleSave();
+                        }
+                      }}
+                      className="p-4 font-nunito text-base leading-relaxed min-h-[200px]"
+                      placeholder="Add your bibliography here..."
+                    />
                   </div>
                 )}
+                
               </div>
             ) : (
               <div className="prose max-w-none">
@@ -552,6 +614,7 @@ export function StepLayout({
         )}
       </main>
 
+      {/* Alert Dialog for Exit Confirmation */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -573,6 +636,47 @@ export function StepLayout({
             </Button>
             <Button onClick={handleExitWithSave} className="bg-green-600 hover:bg-green-700">
               Save & Exit
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Alert Dialog for Navigation Warning */}
+      <AlertDialog open={navigateWarningOpen} onOpenChange={setNavigateWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save changes before navigating?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Do you want to save them before going to the next step?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setNavigateWarningOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setNavigateWarningOpen(false);
+                if (navigateTarget) {
+                  navigate(navigateTarget);
+                }
+              }}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              Don't Save
+            </Button>
+            <Button 
+              onClick={() => {
+                handleSave();
+                setNavigateWarningOpen(false);
+                if (navigateTarget) {
+                  navigate(navigateTarget);
+                }
+              }} 
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Save & Continue
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

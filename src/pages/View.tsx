@@ -1,14 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getActiveEssay, getEssayData } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, RefreshCw } from "lucide-react";
+import { Eye, RefreshCw, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const View = () => {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -16,7 +19,11 @@ const View = () => {
       const data = getEssayData(activeEssayId);
       if (data) {
         setEssayData(data);
+      } else {
+        setError("Could not load essay data. The essay might have been deleted or doesn't exist.");
       }
+    } else {
+      setError("No active essay selected. Please return to the home page and select an essay.");
     }
   }, []);
 
@@ -40,9 +47,46 @@ const View = () => {
     navigate("/step8");
   };
 
+  const returnHome = () => {
+    navigate("/");
+  };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-12">
+        <div className="max-w-2xl mx-auto px-6">
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-5 w-5" />
+            <AlertTitle>Error Loading Essay</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          
+          <div className="flex justify-center">
+            <Button onClick={returnHome} className="bg-blue-600 hover:bg-blue-700">
+              Return to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const paragraphs = getParagraphs();
+  const hasParagraphs = paragraphs.length > 0;
+
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-4xl mx-auto px-6">
+        {!hasParagraphs && !error && (
+          <Alert className="mb-6 bg-amber-50 border-amber-200">
+            <AlertCircle className="h-5 w-5 text-amber-600" />
+            <AlertTitle className="text-amber-800">No Content Yet</AlertTitle>
+            <AlertDescription className="text-amber-700">
+              Your essay doesn't have any content yet. Start by creating an outline and writing paragraphs.
+            </AlertDescription>
+          </Alert>
+        )}
+      
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -50,17 +94,28 @@ const View = () => {
                 {essayData?.essay.title || "Untitled Essay"}
               </CardTitle>
             </div>
-            <Button onClick={handleRefine} className="bg-blue-600 hover:bg-blue-700">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refine Essay
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={returnHome} variant="outline" className="border-slate-200">
+                Return to Editor
+              </Button>
+              <Button onClick={handleRefine} className="bg-blue-600 hover:bg-blue-700">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refine Essay
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="prose prose-slate max-w-none">
-            {getParagraphs().map((paragraph, index) => (
-              <p key={index} className="mb-6 text-slate-700 leading-relaxed">
-                {paragraph}
-              </p>
-            ))}
+            {hasParagraphs ? (
+              paragraphs.map((paragraph, index) => (
+                <p key={index} className="mb-6 text-slate-700 leading-relaxed">
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <div className="text-center py-12 text-slate-500">
+                No content available. Start by adding content in the editor.
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -80,6 +135,19 @@ const View = () => {
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        )}
+        
+        {essayData?.step9?.bibliography && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Bibliography</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="whitespace-pre-line text-slate-700">
+                {essayData.step9.bibliography}
+              </div>
             </CardContent>
           </Card>
         )}

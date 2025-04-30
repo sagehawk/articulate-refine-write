@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
@@ -69,7 +68,19 @@ const Step9 = () => {
   // --- Event Handlers ---
   const handleBibliographyChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBibliography(e.target.value);
-  }, []);
+    
+    // Update essayData in real-time
+    if (essayData) {
+      if (!essayData.step9) {
+        essayData.step9 = { 
+          bibliography: e.target.value, 
+          formattingChecks: formattingChecks 
+        };
+      } else {
+        essayData.step9.bibliography = e.target.value;
+      }
+    }
+  }, [essayData, formattingChecks]);
 
   const handleBibliographySourceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setBibliographySource(e.target.value);
@@ -90,13 +101,25 @@ const Step9 = () => {
     } else {
         formattedEntry = `${source}. Publisher details missing. ${now.getFullYear()}.`;
     }
-    setBibliography(prev => {
-        const newBib = prev ? `${prev.trim()}\n${formattedEntry}` : formattedEntry;
-        return newBib;
-    });
+    
+    const newBibliography = bibliography ? `${bibliography.trim()}\n${formattedEntry}` : formattedEntry;
+    setBibliography(newBibliography);
+    
+    // Update essayData in real-time
+    if (essayData) {
+      if (!essayData.step9) {
+        essayData.step9 = { 
+          bibliography: newBibliography, 
+          formattingChecks: formattingChecks 
+        };
+      } else {
+        essayData.step9.bibliography = newBibliography;
+      }
+    }
+    
     setBibliographySource(""); // Clear the input field
     toast.success("Bibliography entry added");
-  }, [bibliographySource]); 
+  }, [bibliographySource, bibliography, essayData, formattingChecks]); 
 
   // Add a function to insert bibliography into essay content
   const insertBibliographyIntoEssay = useCallback(() => {
@@ -205,7 +228,14 @@ const Step9 = () => {
 
   const handleSave = useCallback((dataToSave: EssayData | null) => {
     if (dataToSave) {
-      const finalDataToSave = { ...dataToSave, step9: { bibliography, formattingChecks } };
+      // We keep the real-time updated bibliography when saving
+      const finalDataToSave = { 
+        ...dataToSave, 
+        step9: { 
+          bibliography, 
+          formattingChecks 
+        } 
+      };
       saveEssayData(finalDataToSave);
       toast.info("Progress saved");
     } else { 
