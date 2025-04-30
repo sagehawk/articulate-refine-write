@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -145,7 +146,14 @@ export function StepLayout({
         
         if (newBibliography) {
           if (!essayData.step9) {
-            essayData.step9 = { bibliography: newBibliography, formattingChecks: {} };
+            essayData.step9 = { 
+              bibliography: newBibliography, 
+              formattingChecks: {
+                doubleSpaced: false,
+                titlePage: false,
+                citationsChecked: false
+              }
+            };
           } else {
             essayData.step9.bibliography = newBibliography;
           }
