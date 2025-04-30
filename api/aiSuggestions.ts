@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         contents: [{
           role: 'user',
           parts: [{
-            text: `Please provide 3 alternative rewrites for the following sentence, making it clearer, more concise, and more engaging. Focus on improving the flow and impact while maintaining the original meaning. Format each suggestion on a new line starting with a number.\nSentence: ${sentence}\nRewrites:`
+            text: `Rewrite the sentence below in three distinct ways. Each rewrite must be clearer, more concise, and more engaging than the original. Keep the original meaning. Output only the three rewritten sentences, numbered 1 to 3, with no introduction or explanation.\nSentence: ${sentence}\n`
           }]
         }],
          // Consider adding generation configuration here if needed, e.g., temperature, topP
