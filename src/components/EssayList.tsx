@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { deleteEssay, setActiveEssay } from "@/utils/localStorage";
-import { FileText, Trash2, Clock, CheckCircle, ArrowRight } from "lucide-react";
+import { FileText, Trash2, Clock, CheckCircle, ArrowRight, Eye, Edit } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +58,11 @@ export function EssayList({ essays, title, icon, onEssayDeleted }: EssayListProp
   const handleContinueEssay = (essay: Essay) => {
     setActiveEssay(essay.id);
     navigate(`/step${essay.currentStep}`);
+  };
+
+  const handleViewEssay = (essay: Essay) => {
+    setActiveEssay(essay.id);
+    navigate(`/view`);
   };
 
   const confirmDeleteEssay = (essay: Essay) => {
@@ -122,7 +127,7 @@ export function EssayList({ essays, title, icon, onEssayDeleted }: EssayListProp
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between pt-2">
+            <CardFooter className="flex justify-between pt-2 gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -132,14 +137,27 @@ export function EssayList({ essays, title, icon, onEssayDeleted }: EssayListProp
                 <Trash2 className="h-4 w-4 mr-1" />
                 Delete
               </Button>
-              <Button
-                onClick={() => handleContinueEssay(essay)}
-                size="sm"
-                className="space-x-1 bg-blue-600 hover:bg-blue-700"
-              >
-                <span>{essay.isCompleted ? "View" : "Continue"}</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-2">
+                {essay.isCompleted ? (
+                  <Button
+                    onClick={() => handleViewEssay(essay)}
+                    size="sm"
+                    className="space-x-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    <span>Preview</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleContinueEssay(essay)}
+                    size="sm"
+                    className="space-x-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    <span>Continue</span>
+                  </Button>
+                )}
+              </div>
             </CardFooter>
           </Card>
         ))}

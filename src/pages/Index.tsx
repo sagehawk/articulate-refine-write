@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EssayList } from "@/components/EssayList";
 import { getDraftEssays, getCompletedEssays, createNewEssay, clearActiveEssay } from "@/utils/localStorage";
-import { FilePlus, BookOpen, Pencil, ArrowRight } from "lucide-react";
+import { FilePlus, BookOpen, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -33,10 +33,20 @@ const Index = () => {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-3xl font-nunito font-bold text-slate-800">
-                Articulate & Refine
-              </h1>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="mr-2"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center">
+                <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+                <h1 className="text-3xl font-nunito font-bold text-slate-800">
+                  Articulate & Refine
+                </h1>
+              </div>
             </div>
             <Button 
               onClick={handleStartNewEssay} 
