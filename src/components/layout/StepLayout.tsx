@@ -20,6 +20,7 @@ import {
   Clock,
   Check,
   LogOut,
+  Eye
 } from "lucide-react";
 import { NoteSidebar } from "@/components/layout/NoteSidebar";
 import { toast } from "sonner";
@@ -477,6 +478,14 @@ export function StepLayout({
   
   const isEssayContentReadOnly = step === 7;
 
+  const handleViewPreview = useCallback(() => {
+    if (contentChanged) {
+      // Save before navigating to preview
+      handleSave();
+    }
+    navigate('/view');
+  }, [navigate, contentChanged, handleSave]);
+
   const getStepTitle = (stepNumber: number) => {
     switch (stepNumber) {
       case 1: return "Goals & Setup";
@@ -584,6 +593,16 @@ export function StepLayout({
             </Button>
           ))}
           
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mb-4 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+            onClick={handleViewPreview}
+            title="Preview Essay"
+          >
+            <Eye className="h-5 w-5" />
+          </Button>
+          
           <div className="flex-grow"></div>
           
           <Button 
@@ -615,6 +634,16 @@ export function StepLayout({
                 >
                   <RefreshCcw className="h-4 w-4 mr-1" />
                   Do Over
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleViewPreview}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Preview
                 </Button>
                 
                 {step === 9 && (

@@ -29,7 +29,6 @@ function App() {
       <Route path="/step9" element={<Step9 />} />
       <Route path="/view" element={<View />} />
       <Route path="/view/:essayId" element={<View />} />
-      {/* Redirect or catch-all route for any other paths to avoid 404s */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
