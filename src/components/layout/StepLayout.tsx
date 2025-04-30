@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -653,20 +652,6 @@ export function StepLayout({
                   }`}
                   placeholder={isEssayContentReadOnly ? "Content is read-only during paragraph reordering" : "Start writing your essay here..."}
                 />
-                
-                {step === 9 && (
-                  <div className="mt-4">
-                    <h3 className="font-semibold mb-2">Bibliography</h3>
-                    <Textarea
-                      value={bibliography}
-                      onChange={handleBibliographyChange}
-                      onBlur={handleBibliographyBlur}
-                      className="p-4 font-nunito text-base leading-relaxed min-h-[200px]"
-                      placeholder="Add your bibliography here..."
-                    />
-                  </div>
-                )}
-                
               </div>
             ) : (
               <div className="prose max-w-none">
