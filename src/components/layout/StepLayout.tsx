@@ -520,6 +520,16 @@ export function StepLayout({
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <header className="bg-white shadow-sm border-b border-blue-100 py-4 px-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleExit}
+            className="text-slate-500 hover:text-slate-700 mr-2"
+            title="Return Home"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
           {isEditing ? (
             <div className="flex-1 max-w-md">
               <Input
@@ -556,16 +566,6 @@ export function StepLayout({
             ) : null}
           </div>
         </div>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={handleExit}
-          className="ml-4 text-slate-500 hover:text-red-500 hover:bg-red-50"
-          title="Exit"
-        >
-          <X className="h-5 w-5" />
-        </Button>
       </header>
 
       <main className="flex-grow flex">
@@ -610,9 +610,9 @@ export function StepLayout({
             size="icon" 
             className="text-slate-600 hover:text-red-600 hover:bg-red-50"
             onClick={handleExit}
-            title="Exit"
+            title="Return Home"
           >
-            <LogOut className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </Button>
         </div>
         

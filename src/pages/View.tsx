@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -109,11 +110,11 @@ const View = () => {
         <div className="mb-6 flex items-center justify-between">
           <Button 
             variant="outline" 
-            onClick={handleReturn}
+            onClick={returnHome}
             className="flex items-center gap-2 border-slate-200"
           >
             <ArrowLeft className="h-4 w-4" /> 
-            Return to Editor
+            Return Home
           </Button>
           
           <div className="text-sm text-slate-500 italic">
