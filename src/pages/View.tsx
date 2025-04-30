@@ -8,6 +8,9 @@ import { Eye, RefreshCw, AlertCircle, ArrowLeft, FileText, PenLine, BookCheck } 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
+// Define the bibliography heading constant
+const BIBLIOGRAPHY_HEADING = "Bibliography";
+
 const View = () => {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
@@ -136,7 +139,7 @@ const View = () => {
               </CardTitle>
               {essayData?.step9?.formattingChecks?.titlePage && (
                 <div className="text-sm text-slate-500 mt-1">
-                  {essayData.essay.author || "Author"}
+                  Author
                 </div>
               )}
             </div>
