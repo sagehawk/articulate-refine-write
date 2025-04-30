@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ReactNode, useEffect, useState, useCallback, useMemo } from "react";
@@ -121,7 +120,48 @@ export function StepLayout({
     }
   }, [essayData]);
 
-  // Set up beforeunload event listener to warn about unsaved changes
+  // Listen for custom event to sync content across components
+  useEffect(() => {
+    const handleSyncEssayContent = (e: CustomEvent) => {
+      const { paragraphs, bibliography: newBibliography } = e.detail;
+      
+      if (paragraphs) {
+        const newContent = paragraphs.join("\n\n");
+        setEssayContent(newContent);
+      }
+      
+      if (newBibliography) {
+        setBibliography(newBibliography);
+      }
+      
+      // Update essayData if needed
+      if (essayData) {
+        if (paragraphs) {
+          if (!essayData.step5) {
+            essayData.step5 = { paragraphs: [] };
+          }
+          essayData.step5.paragraphs = paragraphs;
+        }
+        
+        if (newBibliography) {
+          if (!essayData.step9) {
+            essayData.step9 = { bibliography: newBibliography, formattingChecks: {} };
+          } else {
+            essayData.step9.bibliography = newBibliography;
+          }
+        }
+        
+        setEssayData({ ...essayData });
+      }
+    };
+
+    window.addEventListener('syncEssayContent', handleSyncEssayContent as EventListener);
+    
+    return () => {
+      window.removeEventListener('syncEssayContent', handleSyncEssayContent as EventListener);
+    };
+  }, [essayData]);
+
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (contentChanged) {
@@ -138,6 +178,7 @@ export function StepLayout({
     };
   }, [contentChanged]);
 
+  // Modify the autosave to only save on significant actions, not continuously
   useEffect(() => {
     const autoSaveInterval = 60000; // 1 minute
     
@@ -159,7 +200,7 @@ export function StepLayout({
         clearInterval(autosaveTimerId);
       }
     };
-  }, [essayData, essayContent, contentChanged, bibliography]);
+  }, [essayData, contentChanged]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -248,6 +289,17 @@ export function StepLayout({
       
       saveEssayData(essayData);
       
+      // Dispatch event to sync content across components
+      if (window.parent) {
+        const event = new CustomEvent('syncEssayContent', { 
+          detail: { 
+            paragraphs: essayData.step5?.paragraphs,
+            bibliography: essayData.step9?.bibliography
+          }
+        });
+        window.dispatchEvent(event);
+      }
+      
       setTimeout(() => {
         setIsSaving(false);
         setLastSaved(new Date());
@@ -279,10 +331,24 @@ export function StepLayout({
     setContentChanged(true);
   };
   
+  const handleEssayContentBlur = () => {
+    if (contentChanged) {
+      handleSave();
+      setContentChanged(false);
+    }
+  };
+  
   const handleBibliographyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newBibliography = e.target.value;
     setBibliography(newBibliography);
     setContentChanged(true);
+  };
+  
+  const handleBibliographyBlur = () => {
+    if (contentChanged) {
+      handleSave();
+      setContentChanged(false);
+    }
   };
 
   const handleDoOver = () => {
@@ -572,11 +638,7 @@ export function StepLayout({
                 <Textarea 
                   value={essayContent}
                   onChange={handleEssayContentChange}
-                  onBlur={() => {
-                    if (contentChanged) {
-                      handleSave();
-                    }
-                  }}
+                  onBlur={handleEssayContentBlur}
                   readOnly={isEssayContentReadOnly}
                   className={`min-h-[calc(100vh-280px)] p-4 font-nunito text-base leading-relaxed ${
                     isEssayContentReadOnly ? 'bg-slate-100 cursor-not-allowed' : ''
@@ -590,11 +652,7 @@ export function StepLayout({
                     <Textarea
                       value={bibliography}
                       onChange={handleBibliographyChange}
-                      onBlur={() => {
-                        if (contentChanged) {
-                          handleSave();
-                        }
-                      }}
+                      onBlur={handleBibliographyBlur}
                       className="p-4 font-nunito text-base leading-relaxed min-h-[200px]"
                       placeholder="Add your bibliography here..."
                     />

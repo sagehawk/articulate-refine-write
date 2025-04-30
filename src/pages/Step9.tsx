@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
@@ -69,18 +70,25 @@ const Step9 = () => {
   const handleBibliographyChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBibliography(e.target.value);
     
-    // Update essayData in real-time
+    // Don't update essayData in real-time anymore, will be done on blur
+  }, []);
+
+  // Add an onBlur handler for bibliography changes
+  const handleBibliographyBlur = useCallback(() => {
     if (essayData) {
       if (!essayData.step9) {
         essayData.step9 = { 
-          bibliography: e.target.value, 
+          bibliography: bibliography, 
           formattingChecks: formattingChecks 
         };
       } else {
-        essayData.step9.bibliography = e.target.value;
+        essayData.step9.bibliography = bibliography;
       }
+      
+      // No toast notification here
+      saveEssayData(essayData);
     }
-  }, [essayData, formattingChecks]);
+  }, [essayData, bibliography, formattingChecks]);
 
   const handleBibliographySourceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setBibliographySource(e.target.value);
@@ -105,7 +113,7 @@ const Step9 = () => {
     const newBibliography = bibliography ? `${bibliography.trim()}\n${formattedEntry}` : formattedEntry;
     setBibliography(newBibliography);
     
-    // Update essayData in real-time
+    // Update essayData immediately for this operation
     if (essayData) {
       if (!essayData.step9) {
         essayData.step9 = { 
@@ -115,6 +123,7 @@ const Step9 = () => {
       } else {
         essayData.step9.bibliography = newBibliography;
       }
+      saveEssayData(essayData);
     }
     
     setBibliographySource(""); // Clear the input field
@@ -157,6 +166,13 @@ const Step9 = () => {
     
     setEssayData(updatedEssayData);
     saveEssayData(updatedEssayData);
+    
+    // Force sync the UI with the parent component
+    if (window.parent) {
+      const event = new CustomEvent('syncEssayContent', { detail: { paragraphs, bibliography } });
+      window.dispatchEvent(event);
+    }
+    
     toast.success("Bibliography inserted into essay");
   }, [essayData, bibliography, formattingChecks]);
 
@@ -237,7 +253,7 @@ const Step9 = () => {
         } 
       };
       saveEssayData(finalDataToSave);
-      toast.info("Progress saved");
+      // No toast message here
     } else { 
       toast.error("Cannot save, no essay data loaded."); 
     }
@@ -317,7 +333,9 @@ const Step9 = () => {
                    <Label htmlFor="bibliography-area" className="text-lg font-medium mb-2 block">Bibliography / Works Cited</Label>
                    <Textarea
                      id="bibliography-area" placeholder="Paste your bibliography here, or use the formatter above to add entries..."
-                     value={bibliography} onChange={handleBibliographyChange}
+                     value={bibliography} 
+                     onChange={handleBibliographyChange}
+                     onBlur={handleBibliographyBlur}
                      className="h-64"
                    />
                </div>

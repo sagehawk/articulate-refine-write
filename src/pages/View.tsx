@@ -12,19 +12,25 @@ const View = () => {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
     if (activeEssayId) {
-      const data = getEssayData(activeEssayId);
-      if (data) {
-        setEssayData(data);
-      } else {
-        setError("Could not load essay data. The essay might have been deleted or doesn't exist.");
+      try {
+        const data = getEssayData(activeEssayId);
+        if (data) {
+          setEssayData(data);
+        } else {
+          setError("Could not load essay data. The essay might have been deleted or doesn't exist.");
+        }
+      } catch (e) {
+        setError("Error loading essay data. Please try again.");
       }
     } else {
       setError("No active essay selected. Please return to the home page and select an essay.");
     }
+    setLoading(false);
   }, []);
 
   const getParagraphs = () => {
@@ -50,6 +56,16 @@ const View = () => {
   const returnHome = () => {
     navigate("/");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-12 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-600">Loading essay...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
