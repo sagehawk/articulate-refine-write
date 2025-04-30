@@ -298,21 +298,32 @@ const Step9 = () => {
            </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
-          <div className="flex gap-2">
-             <Button variant="outline" onClick={() => setShowDraftsDialog(true)} className="flex items-center gap-2" disabled={drafts.length === 0}>
+        {/* Action Buttons - SIMPLIFIED */}
+        <div className="flex flex-wrap gap-3 justify-between mt-8">
+          <div className="flex flex-wrap gap-3">
+             <Button 
+               variant="outline" 
+               onClick={() => setShowDraftsDialog(true)} 
+               className="flex items-center gap-2" 
+               disabled={drafts.length === 0}
+             >
                <History className="h-4 w-4" /> View Drafts {drafts.length > 0 ? `(${drafts.length})` : ''}
              </Button>
-             <Button onClick={handleDoOver} variant="outline" className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1" disabled={!essayData}>
+             <Button 
+               onClick={handleDoOver} 
+               variant="outline" 
+               className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1" 
+               disabled={!essayData}
+             >
                <RefreshCcw className="h-4 w-4" /> Start Fresh
              </Button>
-             <Button onClick={handleViewPreview} variant="outline" className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1">
-               <Eye className="h-4 w-4" /> Preview Essay
-             </Button>
           </div>
-          <Button onClick={handleComplete} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto flex items-center gap-1 py-3 px-6 text-base" disabled={!essayData}>
-            <Check className="h-5 w-5" /> Complete Essay
+          <Button 
+            onClick={handleViewPreview} 
+            className="bg-green-600 hover:bg-green-700 flex items-center gap-1 py-2 px-5 text-base" 
+            disabled={!essayData}
+          >
+            <Eye className="h-5 w-5" /> Preview & Complete
           </Button>
         </div>
       </div>
