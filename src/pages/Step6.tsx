@@ -112,6 +112,15 @@ const Step6 = () => {
         data.step5 = { paragraphs: [] };
       }
       data.step5.paragraphs = newParagraphs;
+      
+      // Dispatch event to sync content with other components
+      if (window.parent) {
+        const event = new CustomEvent('syncEssayContent', { 
+          detail: { paragraphs: newParagraphs }
+        });
+        window.dispatchEvent(event);
+      }
+      
       saveEssayData(data);
     }
 
@@ -147,6 +156,25 @@ const Step6 = () => {
     setSelectedSentence("");
     setSelectedSentenceIndex(-1);
     setEditedSentence("");
+    
+    // Real-time sync with other components
+    if (essayData) {
+      const data = { ...essayData };
+      if (!data.step5) {
+        data.step5 = { paragraphs: [] };
+      }
+      data.step5.paragraphs = newParagraphs;
+      
+      // Dispatch event to sync content with other components
+      if (window.parent) {
+        const event = new CustomEvent('syncEssayContent', { 
+          detail: { paragraphs: newParagraphs }
+        });
+        window.dispatchEvent(event);
+      }
+      
+      saveEssayData(data);
+    }
 
     toast("Sentence deleted", {
       description: "The selected sentence has been removed from the paragraph.",
@@ -183,6 +211,25 @@ const Step6 = () => {
     };
 
     setEditHistory([...editHistory, newHistoryEntry]);
+    
+    // Real-time sync with other components
+    if (essayData) {
+      const data = { ...essayData };
+      if (!data.step5) {
+        data.step5 = { paragraphs: [] };
+      }
+      data.step5.paragraphs = newParagraphs;
+      
+      // Dispatch event to sync content with other components
+      if (window.parent) {
+        const event = new CustomEvent('syncEssayContent', { 
+          detail: { paragraphs: newParagraphs }
+        });
+        window.dispatchEvent(event);
+      }
+      
+      saveEssayData(data);
+    }
 
     toast(`Sentence moved ${direction}`, {
       description: "The sentence order has been updated.",
@@ -245,6 +292,14 @@ const Step6 = () => {
       data.step6 = {
         editHistory: editHistory
       };
+      
+      // Dispatch event to sync content with other components
+      if (window.parent) {
+        const event = new CustomEvent('syncEssayContent', { 
+          detail: { paragraphs: data.step5.paragraphs }
+        });
+        window.dispatchEvent(event);
+      }
 
       saveEssayData(data);
     }

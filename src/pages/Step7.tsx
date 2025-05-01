@@ -90,18 +90,34 @@ const Step7 = () => {
         const reorderedParagraphs = [...prevParagraphs];
         const [draggedItem] = reorderedParagraphs.splice(currentDragIndex, 1);
         reorderedParagraphs.splice(currentOverIndex, 0, draggedItem);
+        
+        // Real-time update to the essay content panel
+        if (essayData) {
+          const updatedEssayData = { ...essayData };
+          if (!updatedEssayData.step5) {
+            updatedEssayData.step5 = { paragraphs: [] };
+          }
+          updatedEssayData.step5.paragraphs = reorderedParagraphs;
+          setEssayData(updatedEssayData);
+          
+          // Dispatch event to sync content with other components
+          if (window.parent) {
+            const event = new CustomEvent('syncEssayContent', { 
+              detail: { paragraphs: reorderedParagraphs }
+            });
+            window.dispatchEvent(event);
+          }
+          
+          saveEssayData(updatedEssayData);
+        }
+        
         return reorderedParagraphs;
     });
 
     // Reset refs after state update is queued
     dragItemIndex.current = null;
     dragOverItemIndex.current = null;
-
-    // Note: We don't update essayData state directly here anymore.
-    // handleSave will use the latest 'paragraphs' state when called by StepLayout.
-    // This prevents potential state inconsistencies if save happens between drop and state update.
-
-  }, []); // No direct state dependencies here, uses refs and setParagraphs updater
+  }, [essayData]); // Added essayData to dependencies since we're using it now
 
   const handleDragEnd = useCallback(() => {
     // console.log("Dragging ended");
@@ -111,7 +127,6 @@ const Step7 = () => {
     // Force a re-render to clear any dangling styles (like opacity)
     setParagraphs((prev) => [...prev]);
   }, []);
-
 
   // --- Saving ---
   // This function is passed to StepLayout and called when its save mechanism is triggered
@@ -137,13 +152,19 @@ const Step7 = () => {
     };
 
     saveEssayData(dataToSave);
-    toast.info("Paragraph order saved."); // Provide feedback
-
+    
+    // Dispatch event to sync content with other components
+    if (window.parent) {
+      const event = new CustomEvent('syncEssayContent', { 
+        detail: { paragraphs: paragraphs }
+      });
+      window.dispatchEvent(event);
+    }
+    
     // Also update the main essayData state to reflect the saved state
     setEssayData(dataToSave);
 
   }, [paragraphs]); // Dependency: 'paragraphs' state is crucial for saving the correct order
-
 
   // --- Conditional Rendering ---
 

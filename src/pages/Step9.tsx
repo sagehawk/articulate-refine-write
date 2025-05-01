@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { StepLayout } from "@/components/layout/StepLayout";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Upload, RefreshCcw, History } from "lucide-react";
+import { Check, Upload, RefreshCcw, History, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -69,7 +68,26 @@ const Step9 = () => {
   // --- Event Handlers ---
   const handleBibliographyChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setBibliography(e.target.value);
+    
+    // Don't update essayData in real-time anymore, will be done on blur
   }, []);
+
+  // Add an onBlur handler for bibliography changes
+  const handleBibliographyBlur = useCallback(() => {
+    if (essayData) {
+      if (!essayData.step9) {
+        essayData.step9 = { 
+          bibliography: bibliography, 
+          formattingChecks: formattingChecks 
+        };
+      } else {
+        essayData.step9.bibliography = bibliography;
+      }
+      
+      // No toast notification here
+      saveEssayData(essayData);
+    }
+  }, [essayData, bibliography, formattingChecks]);
 
   const handleBibliographySourceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setBibliographySource(e.target.value);
@@ -90,52 +108,35 @@ const Step9 = () => {
     } else {
         formattedEntry = `${source}. Publisher details missing. ${now.getFullYear()}.`;
     }
-    setBibliography(prev => {
-        const newBib = prev ? `${prev.trim()}\n${formattedEntry}` : formattedEntry;
-        return newBib;
-    });
+    
+    const newBibliography = bibliography ? `${bibliography.trim()}\n${formattedEntry}` : formattedEntry;
+    setBibliography(newBibliography);
+    
+    // Update essayData immediately for this operation
+    if (essayData) {
+      if (!essayData.step9) {
+        essayData.step9 = { 
+          bibliography: newBibliography, 
+          formattingChecks: formattingChecks 
+        };
+      } else {
+        essayData.step9.bibliography = newBibliography;
+      }
+      saveEssayData(essayData);
+    }
+    
     setBibliographySource(""); // Clear the input field
     toast.success("Bibliography entry added");
-  }, [bibliographySource]); 
+  }, [bibliographySource, bibliography, essayData, formattingChecks]);
 
-  // Add a function to insert bibliography into essay content
-  const insertBibliographyIntoEssay = useCallback(() => {
-    if (!essayData || !bibliography.trim()) {
-      toast.info("No bibliography to insert.");
-      return;
-    }
+  // Add a function to view the preview
+  const handleViewPreview = useCallback(() => {
+    if (!essayData) return;
     
-    const updatedEssayData = { ...essayData };
-    if (!updatedEssayData.step5) updatedEssayData.step5 = { paragraphs: [] };
-    
-    let paragraphs = [...updatedEssayData.step5.paragraphs || []];
-    
-    // Remove any existing bibliography heading and content
-    const bibHeadingIndex = paragraphs.findIndex(p => p.trim() === BIBLIOGRAPHY_HEADING);
-    if (bibHeadingIndex !== -1) {
-      paragraphs = paragraphs.slice(0, bibHeadingIndex);
-    }
-    
-    // Ensure there's a space before bibliography
-    if (paragraphs.length > 0 && paragraphs[paragraphs.length - 1].trim() !== "") {
-      paragraphs.push("");
-    }
-    
-    // Add bibliography heading and content
-    paragraphs.push(BIBLIOGRAPHY_HEADING);
-    paragraphs.push(bibliography);
-    
-    updatedEssayData.step5.paragraphs = paragraphs;
-    updatedEssayData.step9 = { 
-      ...updatedEssayData.step9 || {}, 
-      bibliography, 
-      formattingChecks 
-    };
-    
-    setEssayData(updatedEssayData);
-    saveEssayData(updatedEssayData);
-    toast.success("Bibliography inserted into essay");
-  }, [essayData, bibliography, formattingChecks]);
+    // Save current state before navigating
+    handleSave(essayData);
+    navigate('/view');
+  }, [essayData, navigate]);
 
   const handleDoOver = useCallback(() => {
     if (!essayData) return;
@@ -205,9 +206,16 @@ const Step9 = () => {
 
   const handleSave = useCallback((dataToSave: EssayData | null) => {
     if (dataToSave) {
-      const finalDataToSave = { ...dataToSave, step9: { bibliography, formattingChecks } };
+      // We keep the real-time updated bibliography when saving
+      const finalDataToSave = { 
+        ...dataToSave, 
+        step9: { 
+          bibliography, 
+          formattingChecks 
+        } 
+      };
       saveEssayData(finalDataToSave);
-      toast.info("Progress saved");
+      // No toast message here
     } else { 
       toast.error("Cannot save, no essay data loaded."); 
     }
@@ -219,21 +227,14 @@ const Step9 = () => {
       return; 
     }
     const finalEssayData = JSON.parse(JSON.stringify(essayData)) as EssayData;
-    if (!finalEssayData.step5) finalEssayData.step5 = { paragraphs: [] };
-    const bibContent = bibliography.trim();
-    let currentParagraphs = finalEssayData.step5.paragraphs || [];
-    const bibHeadingIndex = currentParagraphs.findIndex(p => p.trim() === BIBLIOGRAPHY_HEADING);
-    if (bibHeadingIndex !== -1) currentParagraphs = currentParagraphs.slice(0, bibHeadingIndex);
-    while (currentParagraphs.length > 0 && currentParagraphs[currentParagraphs.length - 1].trim() === "") currentParagraphs.pop();
-    if (bibContent) { 
-      currentParagraphs.push(""); 
-      currentParagraphs.push(BIBLIOGRAPHY_HEADING); 
-      currentParagraphs.push(bibContent); 
+    if (!finalEssayData.step9) {
+      finalEssayData.step9 = { bibliography, formattingChecks };
+    } else {
+      finalEssayData.step9.bibliography = bibliography;
+      finalEssayData.step9.formattingChecks = formattingChecks;
     }
-    finalEssayData.step5.paragraphs = currentParagraphs;
-    finalEssayData.step9 = { bibliography, formattingChecks };
     saveEssayData(finalEssayData);
-    navigate('/');
+    navigate('/view'); // Navigate to preview instead of home
     toast.success("Essay completed!");
   }, [essayData, bibliography, formattingChecks, navigate]);
 
@@ -287,35 +288,42 @@ const Step9 = () => {
                    <Label htmlFor="bibliography-area" className="text-lg font-medium mb-2 block">Bibliography / Works Cited</Label>
                    <Textarea
                      id="bibliography-area" placeholder="Paste your bibliography here, or use the formatter above to add entries..."
-                     value={bibliography} onChange={handleBibliographyChange}
+                     value={bibliography} 
+                     onChange={handleBibliographyChange}
+                     onBlur={handleBibliographyBlur}
                      className="h-64"
                    />
                </div>
-               
-               {/* Insert Bibliography Button */}
-               <Button 
-                 onClick={insertBibliographyIntoEssay} 
-                 className="w-full bg-green-600 hover:bg-green-700"
-                 disabled={!bibliography.trim()}
-               >
-                 <Check className="h-4 w-4 mr-2" /> Insert Bibliography into Essay
-               </Button>
              </div>
            </CardContent>
         </Card>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
-          <div className="flex gap-2">
-             <Button variant="outline" onClick={() => setShowDraftsDialog(true)} className="flex items-center gap-2" disabled={drafts.length === 0}>
+        {/* Action Buttons - SIMPLIFIED */}
+        <div className="flex flex-wrap gap-3 justify-between mt-8">
+          <div className="flex flex-wrap gap-3">
+             <Button 
+               variant="outline" 
+               onClick={() => setShowDraftsDialog(true)} 
+               className="flex items-center gap-2" 
+               disabled={drafts.length === 0}
+             >
                <History className="h-4 w-4" /> View Drafts {drafts.length > 0 ? `(${drafts.length})` : ''}
              </Button>
-             <Button onClick={handleDoOver} variant="outline" className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1" disabled={!essayData}>
+             <Button 
+               onClick={handleDoOver} 
+               variant="outline" 
+               className="bg-white text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1" 
+               disabled={!essayData}
+             >
                <RefreshCcw className="h-4 w-4" /> Start Fresh
              </Button>
           </div>
-          <Button onClick={handleComplete} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto flex items-center gap-1 py-3 px-6 text-base" disabled={!essayData}>
-            <Check className="h-5 w-5" /> Complete Essay
+          <Button 
+            onClick={handleViewPreview} 
+            className="bg-green-600 hover:bg-green-700 flex items-center gap-1 py-2 px-5 text-base" 
+            disabled={!essayData}
+          >
+            <Eye className="h-5 w-5" /> Preview & Complete
           </Button>
         </div>
       </div>
