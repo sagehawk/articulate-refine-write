@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EssayList } from "@/components/EssayList";
 import { getDraftEssays, getCompletedEssays, createNewEssay, clearActiveEssay } from "@/utils/localStorage";
-import { FilePlus, BookOpen, ArrowLeft } from "lucide-react";
+import { FilePlus, BookOpen } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Index = () => {
@@ -33,29 +33,18 @@ const Index = () => {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-2"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
               <div className="flex items-center">
-                <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
+                <img 
+                  src="https://github.com/user-attachments/assets/277b59a6-4883-4318-a219-3598fc30ddf8" 
+                  alt="Articulate & Refine Logo" 
+                  className="h-8 w-8 mr-3"
+                />
                 <h1 className="text-3xl font-nunito font-bold text-slate-800">
                   Articulate & Refine
                 </h1>
               </div>
             </div>
-            <Button 
-              onClick={handleStartNewEssay} 
-              size="lg"
-              className="font-medium space-x-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <FilePlus className="w-5 h-5" />
-              <span>Start New Essay</span>
-            </Button>
+            {/* Removed the Start New Essay button */}
           </div>
         </div>
       </header>
