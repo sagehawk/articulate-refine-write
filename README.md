@@ -1,4 +1,5 @@
 # Articulate & Refine ✨
+![articulate refine logo](https://github.com/user-attachments/assets/277b59a6-4883-4318-a219-3598fc30ddf8)
 
 An interactive web application designed to guide users through the process of writing structured essays, based directly on the methodology outlined in Jordan B. Peterson's "Essay Writing Guide".
 
