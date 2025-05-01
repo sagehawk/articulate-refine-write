@@ -34,11 +34,7 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="flex items-center">
-                <img 
-                  src="https://github.com/user-attachments/assets/277b59a6-4883-4318-a219-3598fc30ddf8" 
-                  alt="Articulate & Refine Logo" 
-                  className="h-8 w-8 mr-3"
-                />
+                <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
                 <h1 className="text-3xl font-nunito font-bold text-slate-800">
                   Articulate & Refine
                 </h1>
