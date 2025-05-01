@@ -50,7 +50,7 @@ Progress is saved locally in the browser, allowing users to work on multiple ess
 
 ## Screenshots / Demo
 
-![Homepage Screenshot](https://github.com/user-attachments/assets/c7f27236-d8dd-4e04-bea7-16f409d827c4)
+![Homepage Screenshot](https://github.com/user-attachments/assets/b66dc5dd-01c8-455e-b779-43ed455e4c64)
 ![Step 1](https://github.com/user-attachments/assets/aadaf0d2-f536-414d-bcb7-ca3c25c06c95)
 ![Step 3](https://github.com/user-attachments/assets/8149f34e-688f-4aef-9e5e-cdd0b6a0da10)
 ![Step 4](https://github.com/user-attachments/assets/c22d96ac-1c5d-438e-a29e-a164929ba5e9)
