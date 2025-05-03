@@ -12,25 +12,28 @@ import Step8 from "./pages/Step8";
 import Step9 from "./pages/Step9";
 import View from "./pages/View";
 import NotFound from "./pages/NotFound";
+import { ThemeProvider } from "./components/ThemeProvider";
 import "./App.css";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/step1" element={<Step1 />} />
-      <Route path="/step2" element={<Step2 />} />
-      <Route path="/step3" element={<Step3 />} />
-      <Route path="/step4" element={<Step4 />} />
-      <Route path="/step5" element={<Step5 />} />
-      <Route path="/step6" element={<Step6 />} />
-      <Route path="/step7" element={<Step7 />} />
-      <Route path="/step8" element={<Step8 />} />
-      <Route path="/step9" element={<Step9 />} />
-      <Route path="/view" element={<View />} />
-      <Route path="/view/:essayId" element={<View />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <ThemeProvider defaultTheme="system" storageKey="articulate-theme">
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/step1" element={<Step1 />} />
+        <Route path="/step2" element={<Step2 />} />
+        <Route path="/step3" element={<Step3 />} />
+        <Route path="/step4" element={<Step4 />} />
+        <Route path="/step5" element={<Step5 />} />
+        <Route path="/step6" element={<Step6 />} />
+        <Route path="/step7" element={<Step7 />} />
+        <Route path="/step8" element={<Step8 />} />
+        <Route path="/step9" element={<Step9 />} />
+        <Route path="/view" element={<View />} />
+        <Route path="/view/:essayId" element={<View />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </ThemeProvider>
   );
 }
 
