@@ -26,16 +26,6 @@ export const getAllEssays = (): Essay[] => {
   return essays.sort((a, b) => b.lastUpdatedAt - a.lastUpdatedAt);
 };
 
-// Get draft (in progress) essays
-export const getDraftEssays = (): Essay[] => {
-  return getAllEssays().filter(essay => !essay.isCompleted);
-};
-
-// Get completed essays
-export const getCompletedEssays = (): Essay[] => {
-  return getAllEssays().filter(essay => essay.isCompleted);
-};
-
 // Get a specific essay's data
 export const getEssayData = (essayId: string): EssayData | null => {
   const key = `${ESSAY_PREFIX}${essayId}`;
@@ -79,7 +69,16 @@ export const createNewEssay = (title: string): EssayData => {
     isCompleted: false
   };
   
-  const essayData: EssayData = { essay };
+  const essayData: EssayData = { 
+    essay,
+    topics: [],
+    sentences: {},
+    paragraphs: {},
+    refinedSentences: {},
+    reorderedParagraphs: [],
+    bibliography: ""
+  };
+  
   saveEssayData(essayData);
   setActiveEssay(id);
   
