@@ -3,12 +3,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getAllEssays, deleteEssay, setActiveEssay, getEssayData } from "@/utils/localStorage";
-import { ArrowLeft, BookOpen, Trash2, Eye, Download, Plus } from "lucide-react";
+import { ArrowLeft, BookOpen, Trash2, Eye, Download, Plus, Edit } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Essay, EssayData } from "@/types/essay";
+
+interface EnrichedEssay extends Essay {
+  wordCount: number;
+  status: string;
+  snippet: string;
+}
 
 const Library = () => {
   const navigate = useNavigate();
-  const [essays, setEssays] = useState([]);
+  const [essays, setEssays] = useState<EnrichedEssay[]>([]);
 
   useEffect(() => {
     loadEssays();
@@ -28,27 +35,31 @@ const Library = () => {
     setEssays(enrichedEssays);
   };
 
-  const calculateWordCount = (essayData) => {
+  const calculateWordCount = (essayData: EssayData | null) => {
     if (!essayData) return 0;
     let wordCount = 0;
     
     // Count words in paragraphs
     Object.values(essayData.paragraphs || {}).forEach(paragraphArray => {
-      paragraphArray.forEach(paragraph => {
-        wordCount += paragraph.split(/\s+/).filter(word => word.length > 0).length;
-      });
+      if (Array.isArray(paragraphArray)) {
+        paragraphArray.forEach(paragraph => {
+          if (typeof paragraph === 'string') {
+            wordCount += paragraph.split(/\s+/).filter(word => word.length > 0).length;
+          }
+        });
+      }
     });
     
     return wordCount;
   };
 
-  const getContentSnippet = (essayData) => {
+  const getContentSnippet = (essayData: EssayData | null) => {
     if (!essayData) return "No content yet";
     
     if (essayData.topics && essayData.topics.length > 0) {
       const firstTopic = essayData.topics[0];
       const firstParagraphs = essayData.paragraphs?.[0];
-      if (firstParagraphs && firstParagraphs.length > 0) {
+      if (Array.isArray(firstParagraphs) && firstParagraphs.length > 0) {
         const firstSentence = firstParagraphs[0].split('.')[0];
         return `${firstSentence}...`;
       }
@@ -58,18 +69,18 @@ const Library = () => {
     return "No content yet";
   };
 
-  const handleViewEssay = (essayId) => {
+  const handleViewEssay = (essayId: string) => {
     setActiveEssay(essayId);
     navigate("/analysis");
   };
 
-  const handleEditEssay = (essayId) => {
+  const handleEditEssay = (essayId: string) => {
     setActiveEssay(essayId);
     navigate("/editor");
   };
 
-  const handleDeleteEssay = (essayId, title) => {
-    if (window.confirm(`Delete "${title}"?`)) {
+  const handleDeleteEssay = (essayId: string, title: string) => {
+    if (window.confirm(`Delete "${title}"? This action cannot be undone.`)) {
       deleteEssay(essayId);
       loadEssays();
     }
@@ -79,34 +90,36 @@ const Library = () => {
     navigate("/");
   };
 
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container-essay py-6">
+      <header className="border-b border-border bg-card/50 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => navigate("/")}
-                className="rounded-full"
+                className="rounded-full hover:bg-muted"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-h2 text-card-foreground">My Essays</h1>
+              <h1 className="text-3xl font-bold text-foreground">My Essays</h1>
             </div>
             <div className="flex items-center gap-4">
               <Button 
                 onClick={handleCreateNew}
-                className="btn-primary"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create New Essay
@@ -117,85 +130,101 @@ const Library = () => {
         </div>
       </header>
 
-      <main className="container-essay py-8">
+      <main className="max-w-6xl mx-auto px-6 py-12">
         {essays.length === 0 ? (
-          <div className="text-center py-16 space-y-6">
-            <BookOpen className="w-16 h-16 mx-auto text-muted-foreground" />
-            <div className="space-y-2">
-              <h2 className="text-h2 text-foreground">No essays yet</h2>
-              <p className="text-muted-foreground">Start building your first argument</p>
+          <div className="text-center py-20 space-y-8">
+            <div className="w-24 h-24 mx-auto bg-muted rounded-full flex items-center justify-center">
+              <BookOpen className="w-12 h-12 text-muted-foreground" />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold text-foreground">No essays yet</h2>
+              <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                Start building your first argument with our structured approach to essay writing.
+              </p>
             </div>
             <Button 
               onClick={handleCreateNew}
-              className="btn-primary"
+              size="lg"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-5 h-5 mr-2" />
               Create Your First Essay
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {essays.map((essay) => (
               <div 
                 key={essay.id} 
-                className="bg-card rounded-lg border border-border p-6 hover:shadow-lg transition-all duration-200 group fade-in"
+                className="bg-card rounded-xl border border-border p-6 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
               >
                 <div className="space-y-4">
                   {/* Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2">
-                      <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-bold text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
                         {essay.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(essay.lastUpdatedAt)}
-                      </p>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditEssay(essay.id)}
+                          className="h-8 w-8 hover:bg-muted"
+                          title="Edit Essay"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewEssay(essay.id)}
+                          className="h-8 w-8 hover:bg-muted"
+                          title="View Essay"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleViewEssay(essay.id)}
+                          className="h-8 w-8 hover:bg-muted"
+                          title="Download PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteEssay(essay.id, essay.title)}
+                          className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
+                          title="Delete Essay"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleViewEssay(essay.id)}
-                        className="h-8 w-8 hover:bg-muted"
-                        title="View Essay"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleViewEssay(essay.id)}
-                        className="h-8 w-8 hover:bg-muted"
-                        title="Download PDF"
-                      >
-                        <Download className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteEssay(essay.id, essay.title)}
-                        className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
-                        title="Delete Essay"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{formatDate(essay.lastUpdatedAt)}</span>
+                      <span className="w-1 h-1 bg-muted-foreground rounded-full"></span>
+                      <span>{essay.wordCount} words</span>
                     </div>
                   </div>
                   
-                  {/* Metadata */}
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>
-                      Word Count: <span className="font-medium">{essay.wordCount}</span>
-                    </span>
-                    <span>
-                      Status: <span className={`font-medium ${essay.status === 'Completed' ? 'text-primary' : 'text-accent'}`}>
-                        {essay.status}
-                      </span>
+                  {/* Status Badge */}
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      essay.status === 'Completed' 
+                        ? 'bg-primary/10 text-primary' 
+                        : 'bg-accent/10 text-accent-foreground'
+                    }`}>
+                      {essay.status}
                     </span>
                   </div>
                   
                   {/* Content Snippet */}
-                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed font-lora">
                     {essay.snippet}
                   </p>
                   
@@ -203,13 +232,16 @@ const Library = () => {
                   <div className="flex gap-2 pt-2">
                     <Button
                       onClick={() => handleEditEssay(essay.id)}
-                      className="btn-secondary flex-1"
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 hover:bg-muted"
                     >
                       Edit
                     </Button>
                     <Button
                       onClick={() => handleViewEssay(essay.id)}
-                      className="btn-primary flex-1"
+                      size="sm"
+                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                       View
                     </Button>
@@ -225,3 +257,4 @@ const Library = () => {
 };
 
 export default Library;
+
