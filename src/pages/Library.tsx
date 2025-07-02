@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { getAllEssays, deleteEssay, setActiveEssay, getEssayData } from "@/utils/localStorage";
-import { ArrowLeft, BookOpen, Trash2, Eye, Download, Plus, Edit } from "lucide-react";
+import { ArrowLeft, BookOpen, Trash2, Plus } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Essay, EssayData } from "@/types/essay";
 
@@ -16,6 +16,7 @@ interface EnrichedEssay extends Essay {
 const Library = () => {
   const navigate = useNavigate();
   const [essays, setEssays] = useState<EnrichedEssay[]>([]);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   useEffect(() => {
     loadEssays();
@@ -40,15 +41,17 @@ const Library = () => {
     let wordCount = 0;
     
     // Count words in paragraphs
-    Object.values(essayData.paragraphs || {}).forEach(paragraphArray => {
-      if (Array.isArray(paragraphArray)) {
-        paragraphArray.forEach(paragraph => {
-          if (typeof paragraph === 'string') {
-            wordCount += paragraph.split(/\s+/).filter(word => word.length > 0).length;
-          }
-        });
-      }
-    });
+    if (essayData.paragraphs && typeof essayData.paragraphs === 'object') {
+      Object.values(essayData.paragraphs).forEach(paragraphArray => {
+        if (Array.isArray(paragraphArray)) {
+          paragraphArray.forEach(paragraph => {
+            if (typeof paragraph === 'string') {
+              wordCount += paragraph.split(/\s+/).filter(word => word.length > 0).length;
+            }
+          });
+        }
+      });
+    }
     
     return wordCount;
   };
@@ -56,12 +59,14 @@ const Library = () => {
   const getContentSnippet = (essayData: EssayData | null) => {
     if (!essayData) return "No content yet";
     
-    if (essayData.topics && essayData.topics.length > 0) {
+    if (essayData.topics && Array.isArray(essayData.topics) && essayData.topics.length > 0) {
       const firstTopic = essayData.topics[0];
-      const firstParagraphs = essayData.paragraphs?.[0];
-      if (Array.isArray(firstParagraphs) && firstParagraphs.length > 0) {
-        const firstSentence = firstParagraphs[0].split('.')[0];
-        return `${firstSentence}...`;
+      if (essayData.paragraphs && typeof essayData.paragraphs === 'object') {
+        const firstParagraphs = essayData.paragraphs[0];
+        if (Array.isArray(firstParagraphs) && firstParagraphs.length > 0) {
+          const firstSentence = firstParagraphs[0].split('.')[0];
+          return `${firstSentence}...`;
+        }
       }
       return `Topic: ${firstTopic.substring(0, 80)}...`;
     }
@@ -69,17 +74,13 @@ const Library = () => {
     return "No content yet";
   };
 
-  const handleViewEssay = (essayId: string) => {
-    setActiveEssay(essayId);
-    navigate("/analysis");
-  };
-
   const handleEditEssay = (essayId: string) => {
     setActiveEssay(essayId);
     navigate("/editor");
   };
 
-  const handleDeleteEssay = (essayId: string, title: string) => {
+  const handleDeleteEssay = (e: React.MouseEvent, essayId: string, title: string) => {
+    e.stopPropagation(); // Prevent card click
     if (window.confirm(`Delete "${title}"? This action cannot be undone.`)) {
       deleteEssay(essayId);
       loadEssays();
@@ -155,72 +156,32 @@ const Library = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {essays.map((essay) => (
               <div 
-                key={essay.id} 
-                className="bg-card rounded-xl border border-border p-6 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group"
+                key={essay.id}
+                className="bg-card rounded-xl border border-border p-6 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer relative"
+                onClick={() => handleEditEssay(essay.id)}
+                onMouseEnter={() => setHoveredCard(essay.id)}
+                onMouseLeave={() => setHoveredCard(null)}
               >
                 <div className="space-y-4">
                   {/* Header */}
                   <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-bold text-xl text-foreground line-clamp-2 group-hover:text-primary transition-colors leading-tight">
-                        {essay.title}
-                      </h3>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditEssay(essay.id)}
-                          className="h-8 w-8 hover:bg-muted"
-                          title="Edit Essay"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewEssay(essay.id)}
-                          className="h-8 w-8 hover:bg-muted"
-                          title="View Essay"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleViewEssay(essay.id)}
-                          className="h-8 w-8 hover:bg-muted"
-                          title="Download PDF"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteEssay(essay.id, essay.title)}
-                          className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
-                          title="Delete Essay"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <h3 className="font-bold text-xl text-foreground line-clamp-2 hover:text-primary transition-colors leading-tight">
+                      {essay.title}
+                    </h3>
                     
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{formatDate(essay.lastUpdatedAt)}</span>
                       <span className="w-1 h-1 bg-muted-foreground rounded-full"></span>
                       <span>{essay.wordCount} words</span>
+                      <span className="w-1 h-1 bg-muted-foreground rounded-full"></span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        essay.status === 'Completed' 
+                          ? 'bg-primary/10 text-primary' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {essay.status}
+                      </span>
                     </div>
-                  </div>
-                  
-                  {/* Status Badge */}
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      essay.status === 'Completed' 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'bg-accent/10 text-accent-foreground'
-                    }`}>
-                      {essay.status}
-                    </span>
                   </div>
                   
                   {/* Content Snippet */}
@@ -228,24 +189,18 @@ const Library = () => {
                     {essay.snippet}
                   </p>
                   
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  {/* Delete Button - Only shown on hover */}
+                  {hoveredCard === essay.id && (
                     <Button
-                      onClick={() => handleEditEssay(essay.id)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 hover:bg-muted"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDeleteEssay(e, essay.id, essay.title)}
+                      className="absolute top-4 right-4 h-8 w-8 hover:bg-destructive hover:text-destructive-foreground opacity-75 hover:opacity-100"
+                      title="Delete Essay"
                     >
-                      Edit
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                    <Button
-                      onClick={() => handleViewEssay(essay.id)}
-                      size="sm"
-                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    >
-                      View
-                    </Button>
-                  </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -257,4 +212,3 @@ const Library = () => {
 };
 
 export default Library;
-

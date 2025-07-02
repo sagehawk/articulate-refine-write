@@ -80,7 +80,10 @@ const Index = () => {
             {/* Resume Essay Card */}
             {resumeEssay && (
               <div className="bg-card border border-border rounded-lg p-6 space-y-4 slide-up">
-                <h3 className="text-h3 text-accent">Continue where you left off?</h3>
+                <h3 className="text-h3 text-foreground flex items-center gap-2">
+                  <div className="w-1 h-6 bg-accent rounded-full"></div>
+                  Continue where you left off?
+                </h3>
                 <div className="space-y-2">
                   <h4 className="font-semibold text-card-foreground">
                     {resumeEssay.essay.title}
@@ -103,19 +106,20 @@ const Index = () => {
             <div className="space-y-4">
               <Button 
                 onClick={handleStartNewEssay}
-                className="btn-primary w-full h-14 text-lg font-medium"
+                variant="outline"
+                className="btn-secondary w-full h-14 text-lg font-medium"
               >
                 <PenTool className="w-5 h-5 mr-2" />
                 Create New Essay
               </Button>
               
-              <Button 
+              <button 
                 onClick={handleViewEssays}
-                className="btn-secondary w-full h-14 text-lg font-medium"
+                className="flex items-center justify-center gap-2 text-foreground hover:text-primary transition-colors text-lg font-medium p-2"
               >
-                <BookOpen className="w-5 h-5 mr-2" />
+                <BookOpen className="w-5 h-5" />
                 My Essays
-              </Button>
+              </button>
             </div>
           </div>
         </div>
