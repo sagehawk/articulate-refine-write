@@ -77,6 +77,12 @@ export interface Step9Data {
 
 export interface EssayData {
   essay: Essay;
+  topics: string[];
+  sentences: {[key: number]: string[]};
+  paragraphs: {[key: number]: string[]};
+  refinedSentences: {[key: number]: string[]};
+  reorderedParagraphs: number[];
+  bibliography: string;
   step1?: Step1Data;
   step2?: Step2Data;
   step3?: Step3Data;
