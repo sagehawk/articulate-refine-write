@@ -1,9 +1,7 @@
 
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Topics from "./pages/Topics";
-import Sentences from "./pages/Sentences";
-import Editor from "./pages/Editor";
+import UnifiedEditor from "./pages/UnifiedEditor";
 import Analysis from "./pages/Analysis";
 import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
@@ -16,9 +14,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="essay-architect-theme">
       <Routes>
         <Route path="/" element={<Index />} />
-        <Route path="/topics" element={<Topics />} />
-        <Route path="/sentences" element={<Sentences />} />
-        <Route path="/editor" element={<Editor />} />
+        <Route path="/editor" element={<UnifiedEditor />} />
         <Route path="/analysis" element={<Analysis />} />
         <Route path="/library" element={<Library />} />
         <Route path="*" element={<NotFound />} />

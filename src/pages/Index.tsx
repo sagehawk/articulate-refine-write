@@ -33,7 +33,7 @@ const Index = () => {
 
   const handleStartNewEssay = () => {
     createNewEssay("Untitled Essay");
-    navigate("/topics");
+    navigate("/editor");
   };
 
   const handleViewEssays = () => {
@@ -94,7 +94,7 @@ const Index = () => {
                 </div>
                 <Button 
                   onClick={handleResumeEssay}
-                  className="btn-primary w-full h-12"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-12"
                 >
                   <ArrowRight className="w-5 h-5 mr-2" />
                   Resume Writing
@@ -107,7 +107,7 @@ const Index = () => {
               <Button 
                 onClick={handleStartNewEssay}
                 variant="outline"
-                className="btn-secondary w-full h-14 text-lg font-medium"
+                className="bg-transparent text-foreground border-border hover:bg-muted w-full h-14 text-lg font-medium"
               >
                 <PenTool className="w-5 h-5 mr-2" />
                 Create New Essay
