@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Edit, PenTool } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Download, Edit, PenTool, Loader } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EssayData } from "@/types/essay";
 import { getActiveEssay, getEssayData } from "@/utils/localStorage";
@@ -122,7 +124,7 @@ const Analysis = () => {
       <main className="p-6">
         {isAnalyzing ? (
           <div className="text-center py-16">
-            <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-muted-foreground" />
+            <Loader className="h-10 w-10 animate-spin mx-auto mb-4 text-muted-foreground" />
             <p className="text-lg text-muted-foreground">Analyzing your essay...</p>
           </div>
         ) : analysis ? (

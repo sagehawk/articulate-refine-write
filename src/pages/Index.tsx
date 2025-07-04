@@ -106,8 +106,11 @@ const Index = () => {
             <div className="space-y-4">
               <Button 
                 onClick={handleStartNewEssay}
-                variant="outline"
-                className="bg-transparent text-foreground border-border hover:bg-muted w-full h-14 text-lg font-medium"
+                variant={resumeEssay ? "outline" : "default"}
+                className={resumeEssay 
+                  ? "bg-transparent text-foreground border-border hover:bg-muted w-full h-14 text-lg font-medium"
+                  : "bg-primary hover:bg-primary/90 text-primary-foreground w-full h-14 text-lg font-medium"
+                }
               >
                 <PenTool className="w-5 h-5 mr-2" />
                 Create New Essay

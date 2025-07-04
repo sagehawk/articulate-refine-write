@@ -240,7 +240,7 @@ const UnifiedEditor = () => {
                           className={`p-2 text-sm rounded cursor-pointer transition-colors hover:bg-muted/30 ${
                             selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
                               ? 'bg-primary/10 border border-primary/20'
-                              : 'bg-background'
+                              : 'bg-background text-muted-foreground border border-border/50'
                           }`}
                           onClick={() => handleSentenceClick(topicIndex, sentenceIndex)}
                         >
@@ -313,8 +313,8 @@ const UnifiedEditor = () => {
             {editorState === 'initial' && (
               <div className="text-center space-y-8 animate-in fade-in duration-500">
                 <div className="space-y-4">
-                  <h1 className="text-4xl font-bold text-foreground">Let's start with your first topic question.</h1>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  <h1 className="text-5xl font-bold text-foreground">Let's start with your first topic question.</h1>
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     What's the main question you want to explore in your essay?
                   </p>
                 </div>
@@ -324,7 +324,7 @@ const UnifiedEditor = () => {
                     value={currentInput}
                     onChange={(e) => setCurrentInput(e.target.value)}
                     placeholder="e.g., Why is critical thinking important?"
-                    className="text-lg h-12"
+                    className="text-lg h-14 border-2 focus:border-primary"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         addTopicQuestion();
@@ -335,7 +335,7 @@ const UnifiedEditor = () => {
                   <Button
                     onClick={addTopicQuestion}
                     disabled={!currentInput.trim()}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-lg"
                   >
                     <Plus className="w-5 h-5 mr-2" />
                     Add Topic
@@ -344,13 +344,23 @@ const UnifiedEditor = () => {
               </div>
             )}
 
-            {/* Outline State */}
+            {/* Outline State - Enhanced Visual Hierarchy */}
             {editorState === 'outline' && (
-              <div className="text-center space-y-8 animate-in fade-in duration-500">
+              <div className="space-y-8 animate-in fade-in duration-500">
                 <div className="space-y-4">
                   <h1 className="text-4xl font-bold text-foreground">Great! Now let's build your outline.</h1>
-                  <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                     Add first sentences for each topic in the sidebar. Click on any sentence to start writing that paragraph.
+                  </p>
+                </div>
+                
+                {/* Show current active task prominently */}
+                <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-lg">
+                  <h2 className="text-2xl font-semibold text-foreground mb-2">
+                    📝 Current Task: Add First Sentences
+                  </h2>
+                  <p className="text-lg text-muted-foreground">
+                    Use the sidebar to add first sentences for each topic. These will become the foundation of your paragraphs.
                   </p>
                 </div>
               </div>
@@ -360,13 +370,13 @@ const UnifiedEditor = () => {
             {editorState === 'paragraph' && selectedTopicIndex !== null && selectedSentenceIndex !== null && (
               <div className="space-y-8 animate-in fade-in duration-500">
                 <div className="space-y-4">
-                  <h1 className="text-3xl font-bold text-foreground">Write Your Paragraph</h1>
-                  <div className="p-6 bg-accent/5 rounded-lg border border-accent/20">
-                    <p className="font-lora text-xl leading-relaxed text-foreground">
+                  <h1 className="text-4xl font-bold text-foreground">Write Your Paragraph</h1>
+                  <div className="p-6 bg-accent/5 rounded-lg border-l-4 border-accent">
+                    <p className="font-lora text-2xl leading-relaxed text-foreground font-medium">
                       {getCurrentFirstSentence()}
                     </p>
                   </div>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-xl text-muted-foreground">
                     Expand on this sentence. Develop your argument with evidence and analysis.
                   </p>
                 </div>
@@ -378,7 +388,7 @@ const UnifiedEditor = () => {
                     onChange={(e) => updateParagraph(selectedTopicIndex, selectedSentenceIndex, e.target.value)}
                     onSelect={handleTextSelection}
                     placeholder="Start writing your paragraph here. Develop your argument with evidence, examples, and analysis..."
-                    className="min-h-[300px] text-lg font-lora leading-relaxed resize-none border-border focus:border-primary"
+                    className="min-h-[400px] text-lg font-lora leading-relaxed resize-none border-2 focus:border-primary"
                   />
                   
                   {showAICoach && (
