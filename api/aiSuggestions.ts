@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let prompt = '';
     
-    if (type === 'analysis') {
+    if (type === 'analysis' || type === 'analysis_with_highlights') {
       prompt = `Analyze the following essay for clarity, logical consistency, and logical fallacies. Provide your response ONLY in a valid JSON format. The JSON object must have these exact keys and data types:
 - "overallScore": An integer score from 0 to 100 representing the overall quality of the argument.
 - "clarityScore": An integer score from 0 to 100 for clarity and conciseness.
@@ -56,12 +56,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 - "consistencyScore": An integer score from 0 to 100 for logical consistency.
 - "consistencyComment": A one-sentence comment on consistency.
 - "logicalFallacies": An array of objects, where each object represents a detected fallacy and has two keys: "fallacyName" (e.g., "Hasty Generalization") and "offendingSentence" (the exact sentence from the essay where it was found). If no fallacies are found, this must be an empty array.
+- "highlights": An array of objects for interactive feedback. Each object has three keys: "sentence" (the exact sentence from the essay), "feedback" (a helpful suggestion for improvement), and "type" (either "error", "warning", or "suggestion"). Include 3-5 highlights focusing on the most important improvements. If no highlights are needed, this must be an empty array.
 
 Essay Text:
 ---
 ${sentence}`;
     } else {
-      prompt = `You are an expert writing coach. Analyze the following text and provide one single, concise suggestion for improvement. Text: '${sentence}'`;
+      prompt = `You are an expert writing coach. Analyze the following text and provide one single, concise suggestion for improvement. Focus on clarity, conciseness, and stronger arguments. Text: '${sentence}'`;
     }
 
     try {
@@ -76,7 +77,7 @@ ${sentence}`;
         }],
         generationConfig: { 
           temperature: 0.7,
-          maxOutputTokens: type === 'analysis' ? 1000 : 200
+          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 1500 : 200
         }
       };
 
@@ -122,7 +123,7 @@ ${sentence}`;
 
       const responseText = data.candidates[0].content.parts[0].text;
       
-      if (type === 'analysis') {
+      if (type === 'analysis' || type === 'analysis_with_highlights') {
         // For analysis, return the raw JSON response
         return res.status(200).json({ suggestions: [responseText] });
       } else {

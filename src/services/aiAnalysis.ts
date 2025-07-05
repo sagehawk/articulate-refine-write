@@ -1,4 +1,3 @@
-
 export interface AnalysisResult {
   overallScore: number;
   clarityScore: number;
@@ -9,9 +8,14 @@ export interface AnalysisResult {
     fallacyName: string;
     offendingSentence: string;
   }>;
+  highlights?: Array<{
+    sentence: string;
+    feedback: string;
+    type: 'error' | 'warning' | 'suggestion';
+  }>;
 }
 
-export const analyzeEssay = async (essayText: string): Promise<AnalysisResult> => {
+export const analyzeEssayWithHighlights = async (essayText: string): Promise<AnalysisResult> => {
   try {
     const response = await fetch('/api/aiSuggestions', {
       method: 'POST',
@@ -20,7 +24,7 @@ export const analyzeEssay = async (essayText: string): Promise<AnalysisResult> =
       },
       body: JSON.stringify({
         sentence: essayText,
-        type: 'analysis'
+        type: 'analysis_with_highlights'
       }),
     });
 
@@ -39,7 +43,8 @@ export const analyzeEssay = async (essayText: string): Promise<AnalysisResult> =
         clarityComment: analysisData.clarityComment || "Generally clear with room for improvement.",
         consistencyScore: analysisData.consistencyScore || 80,
         consistencyComment: analysisData.consistencyComment || "Arguments flow logically.",
-        logicalFallacies: analysisData.logicalFallacies || []
+        logicalFallacies: analysisData.logicalFallacies || [],
+        highlights: analysisData.highlights || []
       };
     } catch (parseError) {
       // Fallback if AI doesn't return valid JSON
@@ -49,7 +54,8 @@ export const analyzeEssay = async (essayText: string): Promise<AnalysisResult> =
         clarityComment: "Generally clear with room for improvement.",
         consistencyScore: 80,
         consistencyComment: "Arguments flow logically.",
-        logicalFallacies: []
+        logicalFallacies: [],
+        highlights: []
       };
     }
   } catch (error) {
@@ -61,7 +67,11 @@ export const analyzeEssay = async (essayText: string): Promise<AnalysisResult> =
       clarityComment: "Analysis unavailable - please try again later.",
       consistencyScore: 80,
       consistencyComment: "Analysis unavailable - please try again later.",
-      logicalFallacies: []
+      logicalFallacies: [],
+      highlights: []
     };
   }
 };
+
+// Keep the original function for backward compatibility
+export const analyzeEssay = analyzeEssayWithHighlights;

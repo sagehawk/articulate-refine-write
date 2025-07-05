@@ -23,7 +23,8 @@ const UnifiedEditor = () => {
   const navigate = useNavigate();
   const [essayData, setEssayData] = useState<EssayData | null>(null);
   const [editorState, setEditorState] = useState<EditorState>('initial');
-  const [currentInput, setCurrentInput] = useState("");
+  const [topicInput, setTopicInput] = useState("");
+  const [sentenceInputs, setSentenceInputs] = useState<{[key: number]: string}>({});
   const [selectedTopicIndex, setSelectedTopicIndex] = useState<number | null>(null);
   const [selectedSentenceIndex, setSelectedSentenceIndex] = useState<number | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -72,15 +73,15 @@ const UnifiedEditor = () => {
   };
 
   const addTopicQuestion = () => {
-    if (!currentInput.trim() || !essayData) return;
+    if (!topicInput.trim() || !essayData) return;
     
     const updatedData = {
       ...essayData,
-      topics: [...essayData.topics, currentInput.trim()]
+      topics: [...essayData.topics, topicInput.trim()]
     };
     setEssayData(updatedData);
     autoSave(updatedData);
-    setCurrentInput("");
+    setTopicInput("");
     
     // Transition to outline state if this is the first topic
     if (editorState === 'initial') {
@@ -89,6 +90,7 @@ const UnifiedEditor = () => {
   };
 
   const addFirstSentence = (topicIndex: number) => {
+    const currentInput = sentenceInputs[topicIndex] || "";
     if (!currentInput.trim() || !essayData) return;
     
     const updatedSentences = { ...essayData.sentences };
@@ -100,7 +102,19 @@ const UnifiedEditor = () => {
     const updatedData = { ...essayData, sentences: updatedSentences };
     setEssayData(updatedData);
     autoSave(updatedData);
-    setCurrentInput("");
+    
+    // Clear the specific input
+    setSentenceInputs(prev => ({
+      ...prev,
+      [topicIndex]: ""
+    }));
+  };
+
+  const updateSentenceInput = (topicIndex: number, value: string) => {
+    setSentenceInputs(prev => ({
+      ...prev,
+      [topicIndex]: value
+    }));
   };
 
   const updateParagraph = (topicIndex: number, sentenceIndex: number, content: string) => {
@@ -139,18 +153,6 @@ const UnifiedEditor = () => {
     }
   };
 
-  const handleAISuggestion = (suggestion: string) => {
-    if (!textareaRef.current || !essayData || selectedTopicIndex === null || selectedSentenceIndex === null) return;
-    
-    const textarea = textareaRef.current;
-    const currentValue = textarea.value;
-    const newValue = currentValue.substring(0, selectedText.start) + suggestion + currentValue.substring(selectedText.end);
-    
-    textarea.value = newValue;
-    updateParagraph(selectedTopicIndex, selectedSentenceIndex, newValue);
-    setShowAICoach(false);
-  };
-
   const getCurrentParagraphContent = () => {
     if (!essayData || selectedTopicIndex === null || selectedSentenceIndex === null) return "";
     
@@ -174,15 +176,15 @@ const UnifiedEditor = () => {
   if (!essayData) return null;
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header - Mobile responsive */}
+      <div className="bg-background border-b border-border px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => navigate("/")}
-            className="rounded-full hover:bg-muted"
+            className="rounded-full hover:bg-muted shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -190,218 +192,239 @@ const UnifiedEditor = () => {
           <Input
             value={essayData.essay.title}
             onChange={(e) => updateTitle(e.target.value)}
-            className="text-xl font-medium bg-transparent border-none px-0 focus:border-primary"
+            className="text-lg sm:text-xl font-medium bg-transparent border-none px-0 focus:border-primary min-w-0"
             placeholder="Untitled Essay"
           />
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             onClick={() => setIsPreviewOpen(true)}
             variant="outline"
             size="sm"
+            className="hidden sm:flex"
           >
             <Eye className="w-4 h-4 mr-2" />
             Preview
           </Button>
           
           <Button
+            onClick={() => setIsPreviewOpen(true)}
+            variant="outline"
+            size="sm"
+            className="sm:hidden"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          
+          <Button
             onClick={() => navigate("/analysis")}
             size="sm"
-            className="bg-primary hover:bg-primary/90"
+            className="bg-primary hover:bg-primary/90 hidden sm:flex"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
             Analyze
           </Button>
           
-          <ThemeToggle />
+          <Button
+            onClick={() => navigate("/analysis")}
+            size="sm"
+            className="bg-primary hover:bg-primary/90 sm:hidden"
+          >
+            <BarChart3 className="w-4 h-4" />
+          </Button>
+          
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 
-      {/* Sidebar - only visible after initial state */}
-      {editorState !== 'initial' && (
-        <div className="w-80 bg-card border-r border-border flex flex-col mt-20 animate-in slide-in-from-left duration-300">
-          <div className="p-6 border-b border-border">
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Essay Outline</h3>
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Sidebar - Hidden on mobile in initial state, collapsible on tablet */}
+        {editorState !== 'initial' && (
+          <div className="w-full lg:w-80 bg-card border-r border-border flex flex-col lg:min-h-0">
+            <div className="p-4 sm:p-6 border-b border-border">
+              <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Essay Outline</h3>
+              
+              <div className="space-y-3 max-h-60 lg:max-h-none overflow-y-auto">
+                {essayData.topics.map((topic, topicIndex) => (
+                  <div key={topicIndex} className="space-y-2">
+                    <div className="font-medium text-sm p-3 bg-muted/50 rounded-lg">
+                      {topic}
+                    </div>
+                    
+                    {/* First sentences for this topic */}
+                    {Array.isArray(essayData.sentences[topicIndex]) && essayData.sentences[topicIndex].length > 0 && (
+                      <div className="ml-4 space-y-1">
+                        {essayData.sentences[topicIndex].map((sentence: string, sentenceIndex: number) => (
+                          <div
+                            key={sentenceIndex}
+                            className={`p-2 text-sm rounded cursor-pointer transition-colors hover:bg-muted/30 ${
+                              selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
+                                ? 'bg-primary/10 border border-primary/20'
+                                : 'bg-background text-muted-foreground border border-border/50'
+                            }`}
+                            onClick={() => handleSentenceClick(topicIndex, sentenceIndex)}
+                          >
+                            {sentence}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Add first sentence input */}
+                    <div className="ml-4 space-y-2">
+                      <Input
+                        value={sentenceInputs[topicIndex] || ""}
+                        onChange={(e) => updateSentenceInput(topicIndex, e.target.value)}
+                        placeholder="Add first sentence..."
+                        className="text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addFirstSentence(topicIndex);
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={() => addFirstSentence(topicIndex)}
+                        disabled={!sentenceInputs[topicIndex]?.trim()}
+                        size="sm"
+                        variant="ghost"
+                        className="w-full justify-start text-muted-foreground"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Sentence
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             
-            <div className="space-y-3">
-              {essayData.topics.map((topic, topicIndex) => (
-                <div key={topicIndex} className="space-y-2">
-                  <div className="font-medium text-sm p-3 bg-muted/50 rounded-lg">
-                    {topic}
+            <div className="p-4 sm:p-6">
+              <div className="space-y-2">
+                <Input
+                  value={topicInput}
+                  onChange={(e) => setTopicInput(e.target.value)}
+                  placeholder="Add new topic question..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      addTopicQuestion();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={addTopicQuestion}
+                  disabled={!topicInput.trim()}
+                  variant="ghost"
+                  className="w-full justify-start text-muted-foreground"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Topic Question
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-4xl mx-auto px-4 sm:px-8 py-6 sm:py-12">
+              {/* Initial State - Blank Canvas */}
+              {editorState === 'initial' && (
+                <div className="text-center space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-4">
+                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">Let's start with your first topic question.</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+                      What's the main question you want to explore in your essay?
+                    </p>
                   </div>
                   
-                  {/* First sentences for this topic */}
-                  {Array.isArray(essayData.sentences[topicIndex]) && essayData.sentences[topicIndex].length > 0 && (
-                    <div className="ml-4 space-y-1">
-                      {essayData.sentences[topicIndex].map((sentence: string, sentenceIndex: number) => (
-                        <div
-                          key={sentenceIndex}
-                          className={`p-2 text-sm rounded cursor-pointer transition-colors hover:bg-muted/30 ${
-                            selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
-                              ? 'bg-primary/10 border border-primary/20'
-                              : 'bg-background text-muted-foreground border border-border/50'
-                          }`}
-                          onClick={() => handleSentenceClick(topicIndex, sentenceIndex)}
-                        >
-                          {sentence}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Add first sentence input */}
-                  <div className="ml-4 space-y-2">
+                  <div className="max-w-lg mx-auto space-y-4">
                     <Input
-                      value={currentInput}
-                      onChange={(e) => setCurrentInput(e.target.value)}
-                      placeholder="Add first sentence..."
-                      className="text-sm"
+                      value={topicInput}
+                      onChange={(e) => setTopicInput(e.target.value)}
+                      placeholder="e.g., Why is critical thinking important?"
+                      className="text-base sm:text-lg h-12 sm:h-14 border-2 focus:border-primary"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          addFirstSentence(topicIndex);
+                          addTopicQuestion();
                         }
                       }}
+                      autoFocus
                     />
                     <Button
-                      onClick={() => addFirstSentence(topicIndex)}
-                      disabled={!currentInput.trim()}
-                      size="sm"
-                      variant="ghost"
-                      className="w-full justify-start text-muted-foreground"
+                      onClick={addTopicQuestion}
+                      disabled={!topicInput.trim()}
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 h-10 sm:h-12 text-base sm:text-lg w-full sm:w-auto"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Sentence
+                      <Plus className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+                      Add Topic
                     </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="p-6">
-            <div className="space-y-2">
-              <Input
-                value={currentInput}
-                onChange={(e) => setCurrentInput(e.target.value)}
-                placeholder="Add new topic question..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    addTopicQuestion();
-                  }
-                }}
-              />
-              <Button
-                onClick={addTopicQuestion}
-                disabled={!currentInput.trim()}
-                variant="ghost"
-                className="w-full justify-start text-muted-foreground"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Topic Question
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+              )}
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col mt-20">
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-8 py-12">
-            {/* Initial State - Blank Canvas */}
-            {editorState === 'initial' && (
-              <div className="text-center space-y-8 animate-in fade-in duration-500">
-                <div className="space-y-4">
-                  <h1 className="text-5xl font-bold text-foreground">Let's start with your first topic question.</h1>
-                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                    What's the main question you want to explore in your essay?
-                  </p>
-                </div>
-                
-                <div className="max-w-lg mx-auto space-y-4">
-                  <Input
-                    value={currentInput}
-                    onChange={(e) => setCurrentInput(e.target.value)}
-                    placeholder="e.g., Why is critical thinking important?"
-                    className="text-lg h-14 border-2 focus:border-primary"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        addTopicQuestion();
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <Button
-                    onClick={addTopicQuestion}
-                    disabled={!currentInput.trim()}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 text-lg"
-                  >
-                    <Plus className="w-5 h-5 mr-2" />
-                    Add Topic
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Outline State - Enhanced Visual Hierarchy */}
-            {editorState === 'outline' && (
-              <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="space-y-4">
-                  <h1 className="text-4xl font-bold text-foreground">Great! Now let's build your outline.</h1>
-                  <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                    Add first sentences for each topic in the sidebar. Click on any sentence to start writing that paragraph.
-                  </p>
-                </div>
-                
-                {/* Show current active task prominently */}
-                <div className="bg-accent/5 border-l-4 border-accent p-6 rounded-r-lg">
-                  <h2 className="text-2xl font-semibold text-foreground mb-2">
-                    📝 Current Task: Add First Sentences
-                  </h2>
-                  <p className="text-lg text-muted-foreground">
-                    Use the sidebar to add first sentences for each topic. These will become the foundation of your paragraphs.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Paragraph State */}
-            {editorState === 'paragraph' && selectedTopicIndex !== null && selectedSentenceIndex !== null && (
-              <div className="space-y-8 animate-in fade-in duration-500">
-                <div className="space-y-4">
-                  <h1 className="text-4xl font-bold text-foreground">Write Your Paragraph</h1>
-                  <div className="p-6 bg-accent/5 rounded-lg border-l-4 border-accent">
-                    <p className="font-lora text-2xl leading-relaxed text-foreground font-medium">
-                      {getCurrentFirstSentence()}
+              {/* Outline State */}
+              {editorState === 'outline' && (
+                <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-4">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Great! Now let's build your outline.</h1>
+                    <p className="text-lg sm:text-xl text-muted-foreground">
+                      Add first sentences for each topic in the sidebar. Click on any sentence to start writing that paragraph.
                     </p>
                   </div>
-                  <p className="text-xl text-muted-foreground">
-                    Expand on this sentence. Develop your argument with evidence and analysis.
-                  </p>
-                </div>
-
-                <div className="relative">
-                  <Textarea
-                    ref={textareaRef}
-                    value={getCurrentParagraphContent()}
-                    onChange={(e) => updateParagraph(selectedTopicIndex, selectedSentenceIndex, e.target.value)}
-                    onSelect={handleTextSelection}
-                    placeholder="Start writing your paragraph here. Develop your argument with evidence, examples, and analysis..."
-                    className="min-h-[400px] text-lg font-lora leading-relaxed resize-none border-2 focus:border-primary"
-                  />
                   
-                  {showAICoach && (
-                    <div className="absolute top-4 right-4">
-                      <AICoach
-                        selectedText={selectedText.text}
-                        onSuggestion={handleAISuggestion}
-                      />
-                    </div>
-                  )}
+                  <div className="bg-accent/5 border-l-4 border-accent p-4 sm:p-6 rounded-r-lg">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                      📝 Current Task: Add First Sentences
+                    </h2>
+                    <p className="text-base sm:text-lg text-muted-foreground">
+                      Use the sidebar to add first sentences for each topic. These will become the foundation of your paragraphs.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Paragraph State */}
+              {editorState === 'paragraph' && selectedTopicIndex !== null && selectedSentenceIndex !== null && (
+                <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-4">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Write Your Paragraph</h1>
+                    <div className="p-4 sm:p-6 bg-accent/5 rounded-lg border-l-4 border-accent">
+                      <p className="font-lora text-xl sm:text-2xl leading-relaxed text-foreground font-medium">
+                        {getCurrentFirstSentence()}
+                      </p>
+                    </div>
+                    <p className="text-lg sm:text-xl text-muted-foreground">
+                      Expand on this sentence. Develop your argument with evidence and analysis.
+                    </p>
+                  </div>
+
+                  <div className="relative">
+                    <Textarea
+                      ref={textareaRef}
+                      value={getCurrentParagraphContent()}
+                      onChange={(e) => updateParagraph(selectedTopicIndex, selectedSentenceIndex, e.target.value)}
+                      onSelect={handleTextSelection}
+                      placeholder="Start writing your paragraph here. Develop your argument with evidence, examples, and analysis..."
+                      className="min-h-[300px] sm:min-h-[400px] text-base sm:text-lg font-lora leading-relaxed resize-none border-2 focus:border-primary"
+                    />
+                    
+                    {showAICoach && selectedText.text && (
+                      <div className="fixed top-4 right-4 z-50 sm:absolute sm:top-4 sm:right-4">
+                        <AICoach
+                          selectedText={selectedText.text}
+                          onClose={() => setShowAICoach(false)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

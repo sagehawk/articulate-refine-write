@@ -1,18 +1,24 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Wand2, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Wand2, Loader, X } from "lucide-react";
 
 interface AICoachProps {
   selectedText: string;
-  onSuggestion: (suggestion: string) => void;
+  onClose: () => void;
 }
 
-export const AICoach = ({ selectedText, onSuggestion }: AICoachProps) => {
+export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    if (selectedText.trim() && isVisible) {
+      getSuggestion();
+    }
+  }, [selectedText, isVisible]);
 
   const getSuggestion = async () => {
     if (!selectedText.trim()) return;
@@ -48,51 +54,41 @@ export const AICoach = ({ selectedText, onSuggestion }: AICoachProps) => {
     }
   };
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (open && !suggestion && !isLoading) {
-      getSuggestion();
-    }
-  };
+  if (!isVisible) return null;
 
   return (
-    <Popover open={isOpen} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
-        >
-          <Wand2 className="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="start">
-        <div className="space-y-3">
-          <h4 className="font-semibold text-sm">AI Writing Coach</h4>
-          <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
-            "{selectedText}"
+    <Card className="w-72 sm:w-80 shadow-lg border-primary/20 bg-background/95 backdrop-blur-sm">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Wand2 className="h-4 w-4 text-primary" />
+            <h4 className="font-semibold text-sm">AI Writing Coach</h4>
           </div>
-          
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Analyzing your text...
-            </div>
-          ) : suggestion ? (
-            <div className="space-y-2">
-              <p className="text-sm text-foreground">{suggestion}</p>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => onSuggestion(suggestion)}
-                className="w-full"
-              >
-                Apply Suggestion
-              </Button>
-            </div>
-          ) : null}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-3 w-3" />
+          </Button>
         </div>
-      </PopoverContent>
-    </Popover>
+        
+        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded mb-3 break-words">
+          "{selectedText}"
+        </div>
+        
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm">
+            <Loader className="h-4 w-4 animate-spin" />
+            Analyzing your text...
+          </div>
+        ) : suggestion ? (
+          <div className="text-sm text-foreground leading-relaxed">
+            {suggestion}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 };
