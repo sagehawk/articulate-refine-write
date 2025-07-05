@@ -44,23 +44,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const modelName = 'gemini-1.5-flash';
-    console.log(`Calling Gemini API with model: ${modelName}`);
+    console.log(`Calling Gemini API with model: ${modelName} for type: ${type}`);
 
     let prompt = '';
     
     if (type === 'analysis' || type === 'analysis_with_highlights') {
-      prompt = `Analyze the following essay for clarity, logical consistency, and logical fallacies. Provide your response ONLY in a valid JSON format. The JSON object must have these exact keys and data types:
-- "overallScore": An integer score from 0 to 100 representing the overall quality of the argument.
-- "clarityScore": An integer score from 0 to 100 for clarity and conciseness.
-- "clarityComment": A one-sentence comment on clarity.
-- "consistencyScore": An integer score from 0 to 100 for logical consistency.
-- "consistencyComment": A one-sentence comment on consistency.
-- "logicalFallacies": An array of objects, where each object represents a detected fallacy and has two keys: "fallacyName" (e.g., "Hasty Generalization") and "offendingSentence" (the exact sentence from the essay where it was found). If no fallacies are found, this must be an empty array.
-- "highlights": An array of objects for interactive feedback. Each object has three keys: "sentence" (the exact sentence from the essay), "feedback" (a helpful suggestion for improvement), and "type" (either "error", "warning", or "suggestion"). Include 3-5 highlights focusing on the most important improvements. If no highlights are needed, this must be an empty array.
+      prompt = `Analyze the following essay for clarity, logical consistency, and logical fallacies. You MUST respond with ONLY a valid JSON object - no other text before or after. The JSON must have these exact keys:
 
-Essay Text:
+{
+  "overallScore": (integer 0-100),
+  "clarityScore": (integer 0-100), 
+  "clarityComment": "(one sentence about clarity)",
+  "consistencyScore": (integer 0-100),
+  "consistencyComment": "(one sentence about consistency)",
+  "logicalFallacies": [{"fallacyName": "Name of fallacy", "offendingSentence": "exact sentence from essay"}],
+  "highlights": [{"sentence": "exact sentence from essay", "feedback": "specific improvement suggestion", "type": "error|warning|suggestion"}]
+}
+
+For highlights, focus on the 3-5 most important issues. Use "error" for serious problems, "warning" for moderate issues, "suggestion" for improvements.
+
+Essay to analyze:
 ---
-${sentence}`;
+${sentence}
+---
+
+Respond with ONLY the JSON object:`;
     } else {
       prompt = `You are an expert writing coach. Analyze the following text and provide one single, concise suggestion for improvement. Focus on clarity, conciseness, and stronger arguments. Text: '${sentence}'`;
     }
@@ -76,11 +84,12 @@ ${sentence}`;
           }]
         }],
         generationConfig: { 
-          temperature: 0.7,
-          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 1500 : 200
+          temperature: type === 'analysis' || type === 'analysis_with_highlights' ? 0.3 : 0.7,
+          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 2000 : 300
         }
       };
 
+      console.log('Sending request to Gemini...');
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -121,15 +130,10 @@ ${sentence}`;
         });
       }
 
-      const responseText = data.candidates[0].content.parts[0].text;
-      
-      if (type === 'analysis' || type === 'analysis_with_highlights') {
-        // For analysis, return the raw JSON response
-        return res.status(200).json({ suggestions: [responseText] });
-      } else {
-        // For coaching, return the suggestion as is
-        return res.status(200).json({ suggestions: [responseText] });
-      }
+      const responseText = data.candidates[0].content.parts[0].text.trim();
+      console.log('Gemini response text:', responseText);
+
+      return res.status(200).json({ suggestions: [responseText] });
 
     } catch (fetchError) {
       console.error('Error calling Gemini API:', fetchError);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getActiveEssay, getEssayData, saveEssayData, createNewEssay } from "@/utils/localStorage";
-import { ArrowLeft, Plus, Save, Eye, BarChart3 } from "lucide-react";
+import { ArrowLeft, Plus, Eye, BarChart3 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { EssayData } from "@/types/essay";
 import { PreviewModal } from "@/components/PreviewModal";
@@ -30,6 +30,7 @@ const UnifiedEditor = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedText, setSelectedText] = useState<SelectedText>({ text: '', start: 0, end: 0 });
   const [showAICoach, setShowAICoach] = useState(false);
+  const [aiCoachPosition, setAiCoachPosition] = useState({ x: 0, y: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -137,20 +138,31 @@ const UnifiedEditor = () => {
     setEditorState('paragraph');
   };
 
-  const handleTextSelection = () => {
+  const handleTextSelection = (e: React.MouseEvent | React.KeyboardEvent) => {
     if (!textareaRef.current) return;
     
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value.substring(start, end);
-    
-    if (text.trim().length > 0) {
-      setSelectedText({ text: text.trim(), start, end });
-      setShowAICoach(true);
-    } else {
-      setShowAICoach(false);
-    }
+    setTimeout(() => {
+      if (!textareaRef.current) return;
+      
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value.substring(start, end);
+      
+      if (text.trim().length > 10 && text.trim().length < 500) {
+        // Get the position for the AI coach
+        const rect = textarea.getBoundingClientRect();
+        setAiCoachPosition({
+          x: rect.right - 320, // Position from right side
+          y: rect.top + 60
+        });
+        
+        setSelectedText({ text: text.trim(), start, end });
+        setShowAICoach(true);
+      } else {
+        setShowAICoach(false);
+      }
+    }, 100);
   };
 
   const getCurrentParagraphContent = () => {
@@ -250,20 +262,21 @@ const UnifiedEditor = () => {
               <div className="space-y-3 max-h-60 lg:max-h-none overflow-y-auto">
                 {essayData.topics.map((topic, topicIndex) => (
                   <div key={topicIndex} className="space-y-2">
-                    <div className="font-medium text-sm p-3 bg-muted/50 rounded-lg">
+                    {/* Topic header with better hierarchy */}
+                    <div className="font-semibold text-lg p-4 bg-primary/5 rounded-lg border-l-4 border-primary">
                       {topic}
                     </div>
                     
                     {/* First sentences for this topic */}
                     {Array.isArray(essayData.sentences[topicIndex]) && essayData.sentences[topicIndex].length > 0 && (
-                      <div className="ml-4 space-y-1">
+                      <div className="ml-4 space-y-2">
                         {essayData.sentences[topicIndex].map((sentence: string, sentenceIndex: number) => (
                           <div
                             key={sentenceIndex}
-                            className={`p-2 text-sm rounded cursor-pointer transition-colors hover:bg-muted/30 ${
+                            className={`p-3 text-sm rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                               selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
-                                ? 'bg-primary/10 border border-primary/20'
-                                : 'bg-background text-muted-foreground border border-border/50'
+                                ? 'bg-primary/10 border-2 border-primary/30 shadow-md'
+                                : 'bg-background text-muted-foreground border border-border/50 hover:bg-muted/30'
                             }`}
                             onClick={() => handleSentenceClick(topicIndex, sentenceIndex)}
                           >
@@ -279,7 +292,7 @@ const UnifiedEditor = () => {
                         value={sentenceInputs[topicIndex] || ""}
                         onChange={(e) => updateSentenceInput(topicIndex, e.target.value)}
                         placeholder="Add first sentence..."
-                        className="text-sm"
+                        className="text-sm bg-muted/20 border-muted focus:border-primary"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             addFirstSentence(topicIndex);
@@ -291,7 +304,7 @@ const UnifiedEditor = () => {
                         disabled={!sentenceInputs[topicIndex]?.trim()}
                         size="sm"
                         variant="ghost"
-                        className="w-full justify-start text-muted-foreground"
+                        className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Sentence
@@ -308,6 +321,7 @@ const UnifiedEditor = () => {
                   value={topicInput}
                   onChange={(e) => setTopicInput(e.target.value)}
                   placeholder="Add new topic question..."
+                  className="bg-muted/20 border-muted focus:border-primary"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       addTopicQuestion();
@@ -318,7 +332,7 @@ const UnifiedEditor = () => {
                   onClick={addTopicQuestion}
                   disabled={!topicInput.trim()}
                   variant="ghost"
-                  className="w-full justify-start text-muted-foreground"
+                  className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Topic Question
@@ -336,8 +350,8 @@ const UnifiedEditor = () => {
               {editorState === 'initial' && (
                 <div className="text-center space-y-6 sm:space-y-8 animate-in fade-in duration-500">
                   <div className="space-y-4">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">Let's start with your first topic question.</h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground">Let's start with your first topic question.</h1>
+                    <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto">
                       What's the main question you want to explore in your essay?
                     </p>
                   </div>
@@ -347,7 +361,7 @@ const UnifiedEditor = () => {
                       value={topicInput}
                       onChange={(e) => setTopicInput(e.target.value)}
                       placeholder="e.g., Why is critical thinking important?"
-                      className="text-base sm:text-lg h-12 sm:h-14 border-2 focus:border-primary"
+                      className="text-base sm:text-lg h-14 sm:h-16 border-2 focus:border-primary text-center"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           addTopicQuestion();
@@ -358,9 +372,9 @@ const UnifiedEditor = () => {
                     <Button
                       onClick={addTopicQuestion}
                       disabled={!topicInput.trim()}
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 sm:px-8 h-10 sm:h-12 text-base sm:text-lg w-full sm:w-auto"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-12 sm:h-14 text-lg font-semibold w-full sm:w-auto"
                     >
-                      <Plus className="w-4 sm:w-5 h-4 sm:h-5 mr-2" />
+                      <Plus className="w-5 h-5 mr-2" />
                       Add Topic
                     </Button>
                   </div>
@@ -369,19 +383,19 @@ const UnifiedEditor = () => {
 
               {/* Outline State */}
               {editorState === 'outline' && (
-                <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
-                  <div className="space-y-4">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Great! Now let's build your outline.</h1>
-                    <p className="text-lg sm:text-xl text-muted-foreground">
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-4 text-center">
+                    <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Great! Now let's build your outline.</h1>
+                    <p className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto">
                       Add first sentences for each topic in the sidebar. Click on any sentence to start writing that paragraph.
                     </p>
                   </div>
                   
-                  <div className="bg-accent/5 border-l-4 border-accent p-4 sm:p-6 rounded-r-lg">
-                    <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+                  <div className="bg-primary/5 border-l-4 border-primary p-6 sm:p-8 rounded-r-lg">
+                    <h2 className="text-2xl sm:text-3xl font-semibold text-foreground mb-3">
                       📝 Current Task: Add First Sentences
                     </h2>
-                    <p className="text-base sm:text-lg text-muted-foreground">
+                    <p className="text-lg sm:text-xl text-muted-foreground">
                       Use the sidebar to add first sentences for each topic. These will become the foundation of your paragraphs.
                     </p>
                   </div>
@@ -390,15 +404,15 @@ const UnifiedEditor = () => {
 
               {/* Paragraph State */}
               {editorState === 'paragraph' && selectedTopicIndex !== null && selectedSentenceIndex !== null && (
-                <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
-                  <div className="space-y-4">
-                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Write Your Paragraph</h1>
-                    <div className="p-4 sm:p-6 bg-accent/5 rounded-lg border-l-4 border-accent">
-                      <p className="font-lora text-xl sm:text-2xl leading-relaxed text-foreground font-medium">
+                <div className="space-y-8 animate-in fade-in duration-500">
+                  <div className="space-y-6">
+                    <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Write Your Paragraph</h1>
+                    <div className="p-6 sm:p-8 bg-primary/5 rounded-lg border-l-4 border-primary">
+                      <p className="font-lora text-2xl sm:text-3xl leading-relaxed text-foreground font-medium">
                         {getCurrentFirstSentence()}
                       </p>
                     </div>
-                    <p className="text-lg sm:text-xl text-muted-foreground">
+                    <p className="text-xl sm:text-2xl text-muted-foreground">
                       Expand on this sentence. Develop your argument with evidence and analysis.
                     </p>
                   </div>
@@ -408,13 +422,21 @@ const UnifiedEditor = () => {
                       ref={textareaRef}
                       value={getCurrentParagraphContent()}
                       onChange={(e) => updateParagraph(selectedTopicIndex, selectedSentenceIndex, e.target.value)}
-                      onSelect={handleTextSelection}
+                      onMouseUp={handleTextSelection}
+                      onKeyUp={handleTextSelection}
                       placeholder="Start writing your paragraph here. Develop your argument with evidence, examples, and analysis..."
-                      className="min-h-[300px] sm:min-h-[400px] text-base sm:text-lg font-lora leading-relaxed resize-none border-2 focus:border-primary"
+                      className="min-h-[400px] sm:min-h-[500px] text-lg sm:text-xl font-lora leading-relaxed resize-none border-2 focus:border-primary p-6"
                     />
                     
+                    {/* AI Coach positioned outside the textarea */}
                     {showAICoach && selectedText.text && (
-                      <div className="fixed top-4 right-4 z-50 sm:absolute sm:top-4 sm:right-4">
+                      <div 
+                        className="fixed z-50"
+                        style={{
+                          top: `${aiCoachPosition.y}px`,
+                          right: '20px'
+                        }}
+                      >
                         <AICoach
                           selectedText={selectedText.text}
                           onClose={() => setShowAICoach(false)}
