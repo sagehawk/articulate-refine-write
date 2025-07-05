@@ -1,8 +1,6 @@
 
-// api/aiSuggestions.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// This is the environment variable you set in Vercel's dashboard
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -12,12 +10,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  // Always set Content-Type header for JSON
   res.setHeader('Content-Type', 'application/json');
 
   if (req.method !== 'POST') {
@@ -49,19 +45,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let prompt = '';
     
     if (type === 'analysis' || type === 'analysis_with_highlights') {
-      prompt = `Analyze the following essay for clarity, logical consistency, and logical fallacies. You MUST respond with ONLY a valid JSON object - no other text before or after. The JSON must have these exact keys:
+      prompt = `You are a critical essay analysis expert. Analyze the following essay and provide honest, detailed feedback. The essay may have significant issues - be thorough and constructive in your criticism.
+
+You MUST respond with ONLY a valid JSON object - no other text before or after. The JSON must have these exact keys:
 
 {
-  "overallScore": (integer 0-100),
-  "clarityScore": (integer 0-100), 
-  "clarityComment": "(one sentence about clarity)",
-  "consistencyScore": (integer 0-100),
-  "consistencyComment": "(one sentence about consistency)",
+  "overallScore": (integer 0-100, be honest - most student essays should score 40-70),
+  "clarityScore": (integer 0-100, judge based on actual writing quality), 
+  "clarityComment": "(one detailed sentence about specific clarity issues)",
+  "consistencyScore": (integer 0-100, look for logical flow and argument consistency),
+  "consistencyComment": "(one detailed sentence about specific consistency issues)",
   "logicalFallacies": [{"fallacyName": "Name of fallacy", "offendingSentence": "exact sentence from essay"}],
-  "highlights": [{"sentence": "exact sentence from essay", "feedback": "specific improvement suggestion", "type": "error|warning|suggestion"}]
+  "highlights": [{"sentence": "exact sentence from essay", "feedback": "specific, actionable improvement suggestion", "type": "error|warning|suggestion"}]
 }
 
-For highlights, focus on the 3-5 most important issues. Use "error" for serious problems, "warning" for moderate issues, "suggestion" for improvements.
+For scoring:
+- 90-100: Exceptional, publication-quality writing
+- 80-89: Very good, minor issues
+- 70-79: Good, some notable issues
+- 60-69: Adequate, several issues
+- 50-59: Poor, major issues
+- Below 50: Very poor, fundamental problems
+
+For highlights, focus on the 5-8 most important issues. Use:
+- "error" for serious problems (grammar, logic, factual errors)
+- "warning" for moderate issues (unclear phrasing, weak arguments)
+- "suggestion" for improvements (style, word choice, structure)
+
+Be specific and constructive in your feedback. Point out actual problems, not generic praise.
 
 Essay to analyze:
 ---
@@ -70,7 +81,7 @@ ${sentence}
 
 Respond with ONLY the JSON object:`;
     } else {
-      prompt = `You are an expert writing coach. Analyze the following text and provide one single, concise suggestion for improvement. Focus on clarity, conciseness, and stronger arguments. Text: '${sentence}'`;
+      prompt = `You are an expert writing coach. Analyze the following text and provide one specific, actionable suggestion for improvement. Focus on the most important issue: clarity, conciseness, stronger arguments, or better word choice. Be constructive and specific. Text: '${sentence}'`;
     }
 
     try {
@@ -84,8 +95,8 @@ Respond with ONLY the JSON object:`;
           }]
         }],
         generationConfig: { 
-          temperature: type === 'analysis' || type === 'analysis_with_highlights' ? 0.3 : 0.7,
-          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 2000 : 300
+          temperature: type === 'analysis' || type === 'analysis_with_highlights' ? 0.2 : 0.7,
+          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 3000 : 300
         }
       };
 
