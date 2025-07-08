@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getActiveEssay, getEssayData, saveEssayData, createNewEssay } from "@/utils/localStorage";
@@ -101,6 +100,30 @@ const UnifiedEditor = () => {
     autoSave(updatedData);
   };
 
+  const editTopic = (topicIndex: number, newTopic: string) => {
+    if (!essayData) return;
+    
+    const updatedTopics = [...essayData.topics];
+    updatedTopics[topicIndex] = newTopic;
+    
+    const updatedData = { ...essayData, topics: updatedTopics };
+    setEssayData(updatedData);
+    autoSave(updatedData);
+  };
+
+  const editSentence = (topicIndex: number, sentenceIndex: number, newSentence: string) => {
+    if (!essayData) return;
+    
+    const updatedSentences = { ...essayData.sentences };
+    if (Array.isArray(updatedSentences[topicIndex])) {
+      updatedSentences[topicIndex][sentenceIndex] = newSentence;
+    }
+    
+    const updatedData = { ...essayData, sentences: updatedSentences };
+    setEssayData(updatedData);
+    autoSave(updatedData);
+  };
+
   const handleSentenceClick = (topicIndex: number, sentenceIndex: number) => {
     setSelectedTopicIndex(topicIndex);
     setSelectedSentenceIndex(sentenceIndex);
@@ -147,6 +170,8 @@ const UnifiedEditor = () => {
             onAddTopic={addTopicQuestion}
             onAddSentence={addFirstSentence}
             onSentenceClick={handleSentenceClick}
+            onEditTopic={editTopic}
+            onEditSentence={editSentence}
           />
         )}
 

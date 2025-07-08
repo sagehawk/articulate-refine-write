@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ const Analysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedHighlight, setSelectedHighlight] = useState<number | null>(null);
   const [essayText, setEssayText] = useState("");
+  const essayContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -38,8 +39,8 @@ const Analysis = () => {
   const performAnalysis = async (data: EssayData) => {
     setIsAnalyzing(true);
     
-    // Combine all essay content with proper formatting
-    let fullEssayText = `${data.essay.title}\n\n`;
+    // Combine essay content WITHOUT the title (title is displayed separately)
+    let fullEssayText = '';
     
     // Add topics and paragraphs with proper structure
     data.topics.forEach((topic, index) => {
@@ -77,6 +78,17 @@ const Analysis = () => {
 
   const handleDownloadPDF = () => {
     toast.info("PDF download will be available soon!");
+  };
+
+  const scrollToHighlight = (highlightIndex: number) => {
+    const highlightElements = essayContentRef.current?.querySelectorAll('[data-highlight]');
+    if (highlightElements && highlightElements[highlightIndex]) {
+      highlightElements[highlightIndex].scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+      setSelectedHighlight(highlightIndex);
+    }
   };
 
   const highlightText = (text: string, highlights: Array<{sentence: string, feedback: string, type: 'error' | 'warning' | 'suggestion'}>) => {
@@ -167,8 +179,9 @@ const Analysis = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
             {/* Essay Text with Highlights */}
             <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-semibold text-foreground mb-6">Your Essay</h2>
+              <h2 className="text-2xl font-semibold text-foreground mb-6">{essayData.essay.title}</h2>
               <div 
+                ref={essayContentRef}
                 className="prose prose-lg max-w-none text-foreground leading-relaxed font-lora"
                 dangerouslySetInnerHTML={{ __html: highlightText(essayText, analysis.highlights || []) }}
                 onClick={(e) => {
@@ -260,7 +273,7 @@ const Analysis = () => {
                           highlight.type === 'warning' ? 'border-yellow-200 bg-yellow-50 hover:bg-yellow-100 dark:border-yellow-800 dark:bg-yellow-950' :
                           'border-blue-200 bg-blue-50 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-950'
                         } ${selectedHighlight === index ? 'ring-2 ring-primary' : ''}`}
-                        onClick={() => handleHighlightClick(index)}
+                        onClick={() => scrollToHighlight(index)}
                       >
                         <div className="flex items-start gap-3">
                           <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${

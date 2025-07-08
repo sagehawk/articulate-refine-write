@@ -26,11 +26,53 @@ const Index = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'No date';
+      }
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return 'No date';
+    }
+  };
+
+  const calculateWordCount = (essay: any) => {
+    let totalWords = 0;
+    
+    // Count words in paragraphs
+    if (essay.paragraphs) {
+      Object.values(essay.paragraphs).forEach((paragraphs: any) => {
+        if (Array.isArray(paragraphs)) {
+          paragraphs.forEach((paragraph: string) => {
+            if (paragraph && typeof paragraph === 'string') {
+              const words = paragraph.trim().split(/\s+/).filter(word => word.length > 0);
+              totalWords += words.length;
+            }
+          });
+        }
+      });
+    }
+    
+    // Count words in sentences
+    if (essay.sentences) {
+      Object.values(essay.sentences).forEach((sentences: any) => {
+        if (Array.isArray(sentences)) {
+          sentences.forEach((sentence: string) => {
+            if (sentence && typeof sentence === 'string') {
+              const words = sentence.trim().split(/\s+/).filter(word => word.length > 0);
+              totalWords += words.length;
+            }
+          });
+        }
+      });
+    }
+    
+    return totalWords;
   };
 
   return (
@@ -97,7 +139,7 @@ const Index = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <FileText className="w-4 h-4" />
-                          {essay.wordCount || 0} words
+                          {calculateWordCount(essay)} words
                         </div>
                       </div>
                       
