@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, X-goog-api-key');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -39,13 +39,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const modelName = 'gemini-1.5-flash';
-    console.log(`Calling Gemini API with model: ${modelName} for type: ${type}`);
+    console.log(`Calling Gemini API for type: ${type}`);
 
     let prompt = '';
     
     if (type === 'analysis' || type === 'analysis_with_highlights') {
-      prompt = `You are a critical essay analysis expert. Analyze the following essay and provide honest, detailed feedback. The essay may have significant issues - be thorough and constructive in your criticism.
+      prompt = `You are a critical essay analysis expert. Analyze the following essay and provide honest, detailed feedback. Be thorough and constructive in your criticism.
 
 You MUST respond with ONLY a valid JSON object - no other text before or after. The JSON must have these exact keys:
 
@@ -80,24 +79,27 @@ ${sentence}
 ---
 
 Respond with ONLY the JSON object:`;
+    } else if (type === 'coach') {
+      prompt = `You are an expert writing coach. The user has selected this text from their essay paragraph:
+
+"${sentence}"
+
+Provide one specific, actionable suggestion to improve this text. Focus on the most important issue: clarity, conciseness, stronger arguments, better word choice, grammar, or logical flow. Be constructive and specific. Give practical advice they can immediately apply.
+
+Keep your response to 1-2 sentences and be encouraging while being helpful.`;
     } else {
       prompt = `You are an expert writing coach. Analyze the following text and provide one specific, actionable suggestion for improvement. Focus on the most important issue: clarity, conciseness, stronger arguments, or better word choice. Be constructive and specific. Text: '${sentence}'`;
     }
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`;
       
       const requestBody = {
         contents: [{
-          role: 'user',
           parts: [{
             text: prompt
           }]
-        }],
-        generationConfig: { 
-          temperature: type === 'analysis' || type === 'analysis_with_highlights' ? 0.2 : 0.7,
-          maxOutputTokens: type === 'analysis' || type === 'analysis_with_highlights' ? 3000 : 300
-        }
+        }]
       };
 
       console.log('Sending request to Gemini...');
@@ -105,6 +107,7 @@ Respond with ONLY the JSON object:`;
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-goog-api-key': GEMINI_API_KEY,
         },
         body: JSON.stringify(requestBody),
       });

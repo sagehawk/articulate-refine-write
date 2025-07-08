@@ -74,8 +74,8 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
           </Button>
         </div>
         
-        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded mb-3 break-words">
-          "{selectedText}"
+        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded mb-3 break-words max-h-20 overflow-y-auto">
+          "{selectedText.length > 100 ? selectedText.substring(0, 100) + '...' : selectedText}"
         </div>
         
         {isLoading ? (

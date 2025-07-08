@@ -2,33 +2,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { createNewEssay, getActiveEssay, getEssayData, getAllEssays } from "@/utils/localStorage";
-import { PenTool, BookOpen, ArrowRight } from "lucide-react";
+import { createNewEssay, getAllEssays } from "@/utils/localStorage";
+import { PenTool, Calendar, FileText } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [resumeEssay, setResumeEssay] = useState(null);
+  const [essays, setEssays] = useState([]);
   
   useEffect(() => {
-    // Check for unfinished essays
-    const activeEssayId = getActiveEssay();
-    if (activeEssayId) {
-      const essayData = getEssayData(activeEssayId);
-      if (essayData && !essayData.essay.isCompleted) {
-        setResumeEssay(essayData);
-      }
-    } else {
-      // Check for most recent unfinished essay
-      const essays = getAllEssays();
-      const unfinishedEssay = essays.find(essay => !essay.isCompleted);
-      if (unfinishedEssay) {
-        const essayData = getEssayData(unfinishedEssay.id);
-        if (essayData) {
-          setResumeEssay(essayData);
-        }
-      }
-    }
+    const allEssays = getAllEssays();
+    setEssays(allEssays);
   }, []);
 
   const handleStartNewEssay = () => {
@@ -36,21 +20,17 @@ const Index = () => {
     navigate("/editor");
   };
 
-  const handleViewEssays = () => {
-    navigate("/library");
+  const handleOpenEssay = (essayId: string) => {
+    localStorage.setItem('activeEssayId', essayId);
+    navigate("/editor");
   };
 
-  const handleResumeEssay = () => {
-    if (resumeEssay) {
-      navigate("/editor");
-    }
-  };
-
-  const getContentSnippet = (essayData) => {
-    if (essayData.topics && essayData.topics.length > 0) {
-      return `Starting with: "${essayData.topics[0]}"`;
-    }
-    return "No content yet";
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
   return (
@@ -59,72 +39,79 @@ const Index = () => {
         <ThemeToggle />
       </header>
       
-      <main className="flex-1 flex items-center justify-center px-8 py-16">
-        <div className="container-essay">
-          <div className="text-center space-y-12">
-            {/* Brand Header */}
+      <main className="flex-1 flex flex-col items-center justify-start px-8 py-16">
+        <div className="container-essay max-w-6xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center space-y-8 mb-16">
             <div className="space-y-6 fade-in">
-              <h1 className="text-h1 text-foreground">
-                Essay Architect
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground">
+                Build Your Argument
               </h1>
-              <div className="space-y-3">
-                <h2 className="text-h2 text-foreground">
-                  Build Your Argument
-                </h2>
-                <p className="text-body text-muted-foreground max-w-md mx-auto">
-                  The structured path to clear thinking and compelling writing
-                </p>
-              </div>
+              <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                The structured path to clear thinking and compelling writing
+              </p>
             </div>
             
-            {/* Resume Essay Card */}
-            {resumeEssay && (
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4 slide-up">
-                <h3 className="text-h3 text-foreground flex items-center gap-2">
-                  <div className="w-1 h-6 bg-accent rounded-full"></div>
-                  Continue where you left off?
-                </h3>
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-card-foreground">
-                    {resumeEssay.essay.title}
-                  </h4>
-                  <p className="text-muted-foreground text-sm">
-                    {getContentSnippet(resumeEssay)}
-                  </p>
-                </div>
-                <Button 
-                  onClick={handleResumeEssay}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground w-full h-12"
-                >
-                  <ArrowRight className="w-5 h-5 mr-2" />
-                  Resume Writing
-                </Button>
-              </div>
-            )}
-            
-            {/* Main Actions */}
-            <div className="space-y-4">
-              <Button 
-                onClick={handleStartNewEssay}
-                variant={resumeEssay ? "outline" : "default"}
-                className={resumeEssay 
-                  ? "bg-transparent text-foreground border-border hover:bg-muted w-full h-14 text-lg font-medium"
-                  : "bg-primary hover:bg-primary/90 text-primary-foreground w-full h-14 text-lg font-medium"
-                }
-              >
-                <PenTool className="w-5 h-5 mr-2" />
-                Create New Essay
-              </Button>
-              
-              <button 
-                onClick={handleViewEssays}
-                className="flex items-center justify-center gap-2 text-foreground hover:text-primary transition-colors text-lg font-medium p-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                My Essays
-              </button>
-            </div>
+            <Button 
+              onClick={handleStartNewEssay}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-16 px-12 text-xl font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <PenTool className="w-6 h-6 mr-3" />
+              Create New Essay
+            </Button>
           </div>
+
+          {/* Essays Grid */}
+          {essays.length > 0 && (
+            <div className="space-y-8">
+              <div className="text-center">
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Your Essays</h2>
+                <p className="text-lg text-muted-foreground">Continue working on your essays or start fresh</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {essays.map((essay) => (
+                  <div
+                    key={essay.id}
+                    onClick={() => handleOpenEssay(essay.id)}
+                    className="bg-card border border-border rounded-xl p-6 cursor-pointer hover:shadow-lg hover:border-primary/30 transition-all duration-200 group"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                          {essay.title}
+                        </h3>
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          essay.isCompleted 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
+                          {essay.isCompleted ? 'Complete' : 'Draft'}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {formatDate(essay.updatedAt)}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <FileText className="w-4 h-4" />
+                          {essay.wordCount || 0} words
+                        </div>
+                      </div>
+                      
+                      {essay.preview && (
+                        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                          {essay.preview}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>
