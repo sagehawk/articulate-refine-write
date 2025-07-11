@@ -20,7 +20,7 @@
 
 ## 🚀 Live Demo
 
-**Try the application live:** [**articulate-refine.vercel.app**](https://your-live-demo-link.com) <!-- Replace with your actual live demo link -->
+**Try the application live:** [**essay.sajjadhaq.com**](https://essay.sajjadhaq.com)
 
 ## ✨ Features
 
@@ -56,8 +56,8 @@ To run this project locally, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/articulate-refine.git
-    cd articulate-refine
+    git clone https://github.com/sagehawk/articulate-refine-write.git
+    cd articulate-refine-write
     ```
 
 2.  **Install dependencies:**
