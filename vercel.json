@@ -7,6 +7,10 @@
     {
       "source": "/api/rewrite",
       "destination": "/api/rewrite"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "functions": {
