@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wand2, Loader, X } from "lucide-react";
@@ -12,13 +12,6 @@ interface AICoachProps {
 export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState("");
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    if (selectedText.trim() && isVisible) {
-      getSuggestion();
-    }
-  }, [selectedText, isVisible]);
 
   const getSuggestion = async () => {
     if (!selectedText.trim()) return;
@@ -54,8 +47,6 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
     }
   };
 
-  if (!isVisible) return null;
-
   return (
     <Card className="w-72 sm:w-80 shadow-lg border-primary/20 bg-background/95 backdrop-blur-sm">
       <CardContent className="p-4">
@@ -87,7 +78,12 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
           <div className="text-sm text-foreground leading-relaxed">
             {suggestion}
           </div>
-        ) : null}
+        ) : (
+          <Button onClick={getSuggestion} size="sm" className="w-full">
+            <Wand2 className="h-4 w-4 mr-2" />
+            Get Feedback
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

@@ -19,58 +19,31 @@ interface ParagraphEditorProps {
 
 export const ParagraphEditor = ({ firstSentence, paragraphContent, onContentChange }: ParagraphEditorProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [selectedText, setSelectedText] = useState<SelectedText>({ text: '', start: 0, end: 0 });
+  const [selectedText, setSelectedText] = useState<SelectedText | null>(null);
   const [showAICoach, setShowAICoach] = useState(false);
   const [aiCoachPosition, setAiCoachPosition] = useState({ x: 0, y: 0 });
 
-  const handleTextSelection = (e: React.MouseEvent | React.KeyboardEvent) => {
+  const handleAICoachClick = () => {
     if (!textareaRef.current) return;
-    
-    setTimeout(() => {
-      if (!textareaRef.current) return;
-      
-      const textarea = textareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = textarea.value.substring(start, end);
-      
-      if (text.trim().length > 10 && text.trim().length < 500) {
-        const rect = textarea.getBoundingClientRect();
-        setAiCoachPosition({
-          x: rect.right - 320,
-          y: rect.top + 60
-        });
-        
-        setSelectedText({ text: text.trim(), start, end });
-        setShowAICoach(true);
-      } else {
-        setShowAICoach(false);
-      }
-    }, 100);
-  };
 
-  const handleAICoach = () => {
-    if (!textareaRef.current) return;
-    
     const textarea = textareaRef.current;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = textarea.value.substring(start, end);
-    
+
     if (text.trim().length > 0) {
-      const rect = textarea.getBoundingClientRect();
-      setAiCoachPosition({
-        x: rect.right - 320,
-        y: rect.top + 60
-      });
-      
       setSelectedText({ text: text.trim(), start, end });
-      setShowAICoach(true);
     } else {
-      // If no text selected, use the full paragraph content
       setSelectedText({ text: paragraphContent, start: 0, end: paragraphContent.length });
-      setShowAICoach(true);
     }
+    
+    const rect = textarea.getBoundingClientRect();
+    setAiCoachPosition({
+      x: rect.right - 320,
+      y: rect.top + 60
+    });
+
+    setShowAICoach(true);
   };
 
   return (
@@ -112,7 +85,7 @@ export const ParagraphEditor = ({ firstSentence, paragraphContent, onContentChan
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">Develop Your Paragraph</h3>
           <Button
-            onClick={handleAICoach}
+            onClick={handleAICoachClick}
             variant="outline"
             size="sm"
             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -127,13 +100,11 @@ export const ParagraphEditor = ({ firstSentence, paragraphContent, onContentChan
             ref={textareaRef}
             value={paragraphContent}
             onChange={(e) => onContentChange(e.target.value)}
-            onMouseUp={handleTextSelection}
-            onKeyUp={handleTextSelection}
             placeholder="Start writing your paragraph here. Build on your opening sentence with evidence, examples, and analysis..."
             className="min-h-[400px] sm:min-h-[500px] text-lg sm:text-xl font-lora leading-relaxed resize-none border-2 focus:border-primary p-6 bg-background"
           />
           
-          {showAICoach && selectedText.text && (
+          {showAICoach && selectedText && (
             <div 
               className="fixed z-50"
               style={{
