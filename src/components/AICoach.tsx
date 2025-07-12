@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wand2, Loader, X } from "lucide-react";
@@ -13,10 +13,15 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState("");
 
+  useEffect(() => {
+    getSuggestion();
+  }, [selectedText]);
+
   const getSuggestion = async () => {
     if (!selectedText.trim()) return;
     
     setIsLoading(true);
+    setSuggestion("");
     try {
       const response = await fetch('/api/aiSuggestions', {
         method: 'POST',
@@ -48,7 +53,7 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
   };
 
   return (
-    <Card className="w-72 sm:w-80 shadow-lg border-primary/20 bg-background/95 backdrop-blur-sm">
+    <Card className="w-72 sm:w-80 shadow-lg border-primary/20 bg-background/95 backdrop-blur-sm animate-in fade-in duration-300">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -65,25 +70,16 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
           </Button>
         </div>
         
-        <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded mb-3 break-words max-h-20 overflow-y-auto">
-          "{selectedText.length > 100 ? selectedText.substring(0, 100) + '...' : selectedText}"
-        </div>
-        
         {isLoading ? (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm min-h-[60px]">
             <Loader className="h-4 w-4 animate-spin" />
             Analyzing your text...
           </div>
         ) : suggestion ? (
-          <div className="text-sm text-foreground leading-relaxed">
+          <div className="text-sm text-foreground leading-relaxed min-h-[60px]">
             {suggestion}
           </div>
-        ) : (
-          <Button onClick={getSuggestion} size="sm" className="w-full">
-            <Wand2 className="h-4 w-4 mr-2" />
-            Get Feedback
-          </Button>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -4,12 +4,6 @@ import { Button } from "@/components/ui/button";
 import { AICoach } from "@/components/AICoach";
 import { Wand2 } from "lucide-react";
 
-interface SelectedText {
-  text: string;
-  start: number;
-  end: number;
-}
-
 interface ParagraphEditorProps {
   firstSentence: string;
   paragraphContent: string;
@@ -24,64 +18,81 @@ export const ParagraphEditor = ({
   onFirstSentenceChange 
 }: ParagraphEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [selectedText, setSelectedText] = useState<SelectedText | null>(null);
-  const [showAICoach, setShowAICoach] = useState(false);
+  const [aiCoachText, setAiCoachText] = useState<string | null>(null);
   const [aiCoachPosition, setAiCoachPosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (editorRef.current) {
-      const firstSentenceEl = editorRef.current.querySelector('.first-sentence');
-      if (firstSentenceEl) {
-        firstSentenceEl.textContent = firstSentence;
-      }
-      // The rest of the content is managed by the contentEditable div itself
-    }
-  }, [firstSentence]);
 
   const handleInput = () => {
     if (editorRef.current) {
       const firstSentenceEl = editorRef.current.querySelector('.first-sentence');
-      if (firstSentenceEl && firstSentenceEl.textContent !== firstSentence) {
-        onFirstSentenceChange(firstSentenceEl.textContent || '');
+      const currentFullText = editorRef.current.innerText;
+      
+      let newFirstSentence = '';
+      let newParagraphContent = '';
+
+      if (firstSentenceEl && firstSentenceEl.textContent) {
+        newFirstSentence = firstSentenceEl.textContent;
+        newParagraphContent = currentFullText.substring(newFirstSentence.length).trim();
+      } else {
+        // Fallback if span is removed or empty
+        const firstSentenceBoundary = currentFullText.indexOf('.') + 1;
+        if (firstSentenceBoundary > 0) {
+          newFirstSentence = currentFullText.substring(0, firstSentenceBoundary);
+          newParagraphContent = currentFullText.substring(firstSentenceBoundary).trim();
+        } else {
+          newFirstSentence = currentFullText;
+        }
       }
 
-      const paragraph = editorRef.current.innerText.replace(firstSentence, '').trim();
-      onContentChange(paragraph);
+      if (newFirstSentence !== firstSentence) {
+        onFirstSentenceChange(newFirstSentence);
+      }
+      if (newParagraphContent !== paragraphContent) {
+        onContentChange(newParagraphContent);
+      }
     }
   };
 
-  const handleAICoachClick = () => {
+  const handleTextSelection = () => {
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.toString().trim().length <= 10) {
+      setAiCoachText(null);
+      return;
+    }
+
+    const selectedText = selection.toString().trim();
+    setAiCoachText(selectedText);
 
     const range = selection.getRangeAt(0);
-    const text = selection.toString();
-
-    if (text.trim().length > 0) {
-      setSelectedText({ text: text.trim(), start: range.startOffset, end: range.endOffset });
-    } else if (editorRef.current) {
-      setSelectedText({ text: editorRef.current.innerText, start: 0, end: editorRef.current.innerText.length });
-    }
-    
     const rect = range.getBoundingClientRect();
-    setAiCoachPosition({
-      x: rect.right - 320,
-      y: rect.top + 60
-    });
-
-    setShowAICoach(true);
+    setAiCoachPosition({ x: rect.right, y: rect.top });
   };
+
+  const handleAICoachButtonClick = () => {
+    if (!editorRef.current) return;
+    const fullText = editorRef.current.innerText;
+    setAiCoachText(fullText);
+
+    const rect = editorRef.current.getBoundingClientRect();
+    setAiCoachPosition({ x: rect.right, y: rect.top });
+  };
+
+  const fullParagraphText = `${firstSentence} ${paragraphContent}`.trim();
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* ... (header and other sections remain the same) ... */}
+      <div className="text-center space-y-6">
+        <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Write Your Paragraph</h1>
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
+          Start with your first sentence below, then expand it into a full paragraph with evidence and analysis.
+        </p>
+      </div>
 
-      {/* Paragraph Editor */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">Develop Your Paragraph</h3>
           <Button
-            onClick={handleAICoachClick}
+            onClick={handleAICoachButtonClick}
             variant="outline"
             size="sm"
             className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
@@ -96,31 +107,32 @@ export const ParagraphEditor = ({
             ref={editorRef}
             contentEditable
             onInput={handleInput}
+            onMouseUp={handleTextSelection}
             suppressContentEditableWarning={true}
             className="min-h-[400px] sm:min-h-[500px] text-lg sm:text-xl font-lora leading-relaxed resize-none border-2 focus:border-primary p-6 bg-background focus:outline-none"
           >
-            <span className="first-sentence font-bold text-primary">{firstSentence}</span>
+            <span className="first-sentence font-bold text-primary">{firstSentence}</span>{' '}
             {paragraphContent}
           </div>
           
-          {showAICoach && selectedText && (
+          {aiCoachText && (
             <div 
               className="fixed z-50"
               style={{
                 top: `${aiCoachPosition.y}px`,
-                right: '20px'
+                left: `${aiCoachPosition.x - 330}px`
               }}
             >
               <AICoach
-                selectedText={selectedText.text}
-                onClose={() => setShowAICoach(false)}
+                selectedText={aiCoachText}
+                onClose={() => setAiCoachText(null)}
               />
             </div>
           )}
         </div>
         
         <div className="text-sm text-muted-foreground text-center">
-          {/* Word count logic might need adjustment for contentEditable div */}
+          {fullParagraphText.split(/\s+/).filter(Boolean).length} words
         </div>
       </div>
     </div>
