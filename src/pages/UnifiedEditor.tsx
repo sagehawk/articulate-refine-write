@@ -189,6 +189,7 @@ const UnifiedEditor = () => {
                   firstSentence={getCurrentFirstSentence()}
                   paragraphContent={getCurrentParagraphContent()}
                   onContentChange={updateParagraph}
+                  onFirstSentenceChange={(newSentence) => editSentence(selectedTopicIndex, selectedSentenceIndex, newSentence)}
                 />
               )}
             </div>
