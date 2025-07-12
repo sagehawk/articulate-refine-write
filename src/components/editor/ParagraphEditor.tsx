@@ -72,13 +72,21 @@ export const ParagraphEditor = ({
     const fullText = editorRef.current.innerText;
 
     // Parse first sentence and paragraph content based on lines
-    const lines = fullText.split('\n');
-    let newFirstSentence = lines[0] || '';
-    let newParagraphContent = lines.slice(1).join('\n') || '';
+    // Use a regex to find the first sentence (ending with .?!) and the rest of the paragraph
+    const sentenceRegex = /^([^.!?]*[.!?])\s*(.*)$/s;
+    const match = fullText.match(sentenceRegex);
 
-    // Trim to remove leading/trailing whitespace
-    newFirstSentence = newFirstSentence.trim();
-    newParagraphContent = newParagraphContent.trim();
+    let newFirstSentence = '';
+    let newParagraphContent = '';
+
+    if (match) {
+      newFirstSentence = match[1].trim();
+      newParagraphContent = match[2].trim();
+    } else {
+      // If no sentence-ending punctuation, treat the whole text as the first sentence
+      newFirstSentence = fullText.trim();
+      newParagraphContent = '';
+    }
 
     if (newFirstSentence !== firstSentence) {
       onFirstSentenceChange(newFirstSentence);
