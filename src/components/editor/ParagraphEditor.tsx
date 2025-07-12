@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { AICoach } from "@/components/AICoach";
 import { Wand2 } from "lucide-react";
@@ -17,7 +17,7 @@ interface ParagraphEditorProps {
   onFirstSentenceChange: (newSentence: string) => void;
 }
 
-export const ParagraphEditor = ({ 
+export const ParagraphEditor = memo(({ 
   firstSentence, 
   paragraphContent, 
   onContentChange, 
@@ -132,4 +132,4 @@ export const ParagraphEditor = ({
       </div>
     </div>
   );
-};
+});

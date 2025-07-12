@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Edit } from "lucide-react";
+import { Plus, X, Edit, ChevronsUpDown, GripVertical } from "lucide-react";
 import { EssayData } from "@/types/essay";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 interface EditorSidebarProps {
   essayData: EssayData;
@@ -14,6 +16,7 @@ interface EditorSidebarProps {
   onSentenceClick: (topicIndex: number, sentenceIndex: number) => void;
   onEditTopic?: (topicIndex: number, newTopic: string) => void;
   onEditSentence?: (topicIndex: number, sentenceIndex: number, newSentence: string) => void;
+  onReorderTopics: (startIndex: number, endIndex: number) => void;
 }
 
 export const EditorSidebar = ({
@@ -24,7 +27,8 @@ export const EditorSidebar = ({
   onAddSentence,
   onSentenceClick,
   onEditTopic,
-  onEditSentence
+  onEditSentence,
+  onReorderTopics
 }: EditorSidebarProps) => {
   const [showTopicInput, setShowTopicInput] = useState(false);
   const [topicInput, setTopicInput] = useState("");
@@ -94,14 +98,9 @@ export const EditorSidebar = ({
     }
   };
 
-  const toggleTopicInput = () => {
-    setShowTopicInput(!showTopicInput);
-    if (!showTopicInput) {
-      setTimeout(() => {
-        const input = document.getElementById('topic-input');
-        if (input) input.focus();
-      }, 100);
-    }
+  const handleOnDragEnd = (result: any) => {
+    if (!result.destination) return;
+    onReorderTopics(result.source.index, result.destination.index);
   };
 
   return (
@@ -109,158 +108,178 @@ export const EditorSidebar = ({
       <div className="p-4 sm:p-6 border-b border-border">
         <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-4">Essay Outline</h3>
         
-        <div className="space-y-4 max-h-60 lg:max-h-none overflow-y-auto">
-          {essayData.topics.map((topic, topicIndex) => (
-            <div key={topicIndex} className="space-y-3">
-              {editingTopic === topicIndex ? (
-                <div className="space-y-2">
-                  <Input
-                    value={editingTopicValue}
-                    onChange={(e) => setEditingTopicValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveTopicEdit();
-                      } else if (e.key === 'Escape') {
-                        setEditingTopic(null);
-                      }
-                    }}
-                    className="text-sm bg-muted/20 border-muted focus:border-primary"
-                    autoFocus
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      onClick={handleSaveTopicEdit}
-                      size="sm"
-                      variant="default"
-                      className="h-7 px-3 text-xs"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      onClick={() => setEditingTopic(null)}
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-3 text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div 
-                  className="font-semibold text-base p-4 bg-primary/10 rounded-lg border-l-4 border-primary cursor-pointer hover:bg-primary/15 transition-colors group flex items-center justify-between"
-                  onClick={() => handleEditTopic(topicIndex)}
-                >
-                  <span className="flex-1">{topic}</span>
-                  <Edit className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" />
-                </div>
-              )}
-              
-              {Array.isArray(essayData.sentences[topicIndex]) && essayData.sentences[topicIndex].length > 0 && (
-                <div className="ml-4 space-y-2">
-                  {essayData.sentences[topicIndex].map((sentence: string, sentenceIndex: number) => (
-                    <div key={sentenceIndex}>
-                      {editingSentence?.topicIndex === topicIndex && editingSentence?.sentenceIndex === sentenceIndex ? (
-                        <div className="space-y-2">
-                          <Input
-                            value={editingSentenceValue}
-                            onChange={(e) => setEditingSentenceValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleSaveSentenceEdit();
-                              } else if (e.key === 'Escape') {
-                                setEditingSentence(null);
-                              }
-                            }}
-                            className="text-sm bg-muted/20 border-muted focus:border-primary"
-                            autoFocus
-                          />
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              onClick={handleSaveSentenceEdit}
-                              size="sm"
-                              variant="default"
-                              className="h-6 px-2 text-xs"
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              onClick={() => setEditingSentence(null)}
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2 text-xs"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={`p-3 text-sm rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md group flex items-center justify-between ${
-                            selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
-                              ? 'bg-primary/10 border-2 border-primary/30 shadow-md'
-                              : 'bg-background text-muted-foreground border border-border/50 hover:bg-muted/30'
-                          }`}
-                          onClick={() => onSentenceClick(topicIndex, sentenceIndex)}
-                        >
-                          <span className="flex-1">{sentence}</span>
-                          <Edit 
-                            className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity ml-2" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditSentence(topicIndex, sentenceIndex);
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <div className="ml-4 space-y-2">
-                {showSentenceInput[topicIndex] ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id={`sentence-input-${topicIndex}`}
-                        value={sentenceInputs[topicIndex] || ""}
-                        onChange={(e) => updateSentenceInput(topicIndex, e.target.value)}
-                        placeholder="Add first sentence..."
-                        className="text-sm bg-muted/20 border-muted focus:border-primary"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleAddSentence(topicIndex);
-                          } else if (e.key === 'Escape') {
-                            setShowSentenceInput(prev => ({ ...prev, [topicIndex]: false }));
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={() => setShowSentenceInput(prev => ({ ...prev, [topicIndex]: false }))}
-                        size="sm"
-                        variant="ghost"
-                        className="p-1 h-8 w-8"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={() => toggleSentenceInput(topicIndex)}
-                    size="sm"
-                    variant="ghost"
-                    className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Sentence
-                  </Button>
-                )}
+        <DragDropContext onDragEnd={handleOnDragEnd}>
+          <Droppable droppableId="topics">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {essayData.topics.map((topic, topicIndex) => (
+                  <Draggable key={topicIndex} draggableId={`topic-${topicIndex}`} index={topicIndex}>
+                    {(provided) => (
+                      <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                        <Collapsible key={topicIndex} className="space-y-3">
+                          {editingTopic === topicIndex ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={editingTopicValue}
+                                onChange={(e) => setEditingTopicValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    handleSaveTopicEdit();
+                                  } else if (e.key === 'Escape') {
+                                    setEditingTopic(null);
+                                  }
+                                }}
+                                className="text-sm bg-muted/20 border-muted focus:border-primary"
+                                autoFocus
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <Button
+                                  onClick={handleSaveTopicEdit}
+                                  size="sm"
+                                  variant="default"
+                                  className="h-7 px-3 text-xs"
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  onClick={() => setEditingTopic(null)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-3 text-xs"
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <CollapsibleTrigger asChild>
+                              <div 
+                                className="font-semibold text-base p-4 bg-primary/10 rounded-lg border-l-4 border-primary cursor-pointer hover:bg-primary/15 transition-colors group flex items-center justify-between"
+                              >
+                                <GripVertical className="w-5 h-5 mr-2 opacity-50" />
+                                <span className="flex-1">{topic}</span>
+                                <div className="flex items-center gap-2">
+                                  <Edit className="w-4 h-4 opacity-0 group-hover:opacity-50 transition-opacity" onClick={(e) => {e.stopPropagation(); handleEditTopic(topicIndex)}} />
+                                  <ChevronsUpDown className="w-4 h-4 opacity-50" />
+                                </div>
+                              </div>
+                            </CollapsibleTrigger>
+                          )}
+                          
+                          <CollapsibleContent>
+                            {Array.isArray(essayData.sentences[topicIndex]) && essayData.sentences[topicIndex].length > 0 && (
+                              <div className="ml-4 space-y-2">
+                                {essayData.sentences[topicIndex].map((sentence: string, sentenceIndex: number) => (
+                                  <div key={sentenceIndex}>
+                                    {editingSentence?.topicIndex === topicIndex && editingSentence?.sentenceIndex === sentenceIndex ? (
+                                      <div className="space-y-2">
+                                        <Input
+                                          value={editingSentenceValue}
+                                          onChange={(e) => setEditingSentenceValue(e.target.value)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              handleSaveSentenceEdit();
+                                            } else if (e.key === 'Escape') {
+                                              setEditingSentence(null);
+                                            }
+                                          }}
+                                          className="text-sm bg-muted/20 border-muted focus:border-primary"
+                                          autoFocus
+                                        />
+                                        <div className="flex gap-2 justify-end">
+                                          <Button
+                                            onClick={handleSaveSentenceEdit}
+                                            size="sm"
+                                            variant="default"
+                                            className="h-6 px-2 text-xs"
+                                          >
+                                            Save
+                                          </Button>
+                                          <Button
+                                            onClick={() => setEditingSentence(null)}
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 px-2 text-xs"
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div
+                                        className={`p-3 text-sm rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md group flex items-center justify-between ${
+                                          selectedTopicIndex === topicIndex && selectedSentenceIndex === sentenceIndex
+                                            ? 'bg-primary/10 border-2 border-primary/30 shadow-md'
+                                            : 'bg-background text-muted-foreground border border-border/50 hover:bg-muted/30'
+                                        }`}
+                                        onClick={() => onSentenceClick(topicIndex, sentenceIndex)}
+                                      >
+                                        <span className="flex-1">{sentence}</span>
+                                        <Edit 
+                                          className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity ml-2" 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditSentence(topicIndex, sentenceIndex);
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            <div className="ml-4 space-y-2">
+                              {showSentenceInput[topicIndex] ? (
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      id={`sentence-input-${topicIndex}`}
+                                      value={sentenceInputs[topicIndex] || ""}
+                                      onChange={(e) => updateSentenceInput(topicIndex, e.target.value)}
+                                      placeholder="Add first sentence..."
+                                      className="text-sm bg-muted/20 border-muted focus:border-primary"
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          handleAddSentence(topicIndex);
+                                        } else if (e.key === 'Escape') {
+                                          setShowSentenceInput(prev => ({ ...prev, [topicIndex]: false }));
+                                        }
+                                      }}
+                                    />
+                                    <Button
+                                      onClick={() => setShowSentenceInput(prev => ({ ...prev, [topicIndex]: false }))}
+                                      size="sm"
+                                      variant="ghost"
+                                      className="p-1 h-8 w-8"
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  onClick={() => toggleSentenceInput(topicIndex)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5"
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Add Sentence
+                                </Button>
+                              )}
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
-            </div>
-          ))}
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </div>
       
       <div className="p-4 sm:p-6">

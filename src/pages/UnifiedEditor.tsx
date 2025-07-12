@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getActiveEssay, getEssayData, saveEssayData, createNewEssay } from "@/utils/localStorage";
 import { EssayData } from "@/types/essay";
@@ -36,7 +36,7 @@ const UnifiedEditor = () => {
     }
   }, []);
 
-  const autoSave = (updatedData: EssayData) => {
+  const autoSave = useCallback((updatedData: EssayData) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -44,9 +44,9 @@ const UnifiedEditor = () => {
     saveTimeoutRef.current = setTimeout(() => {
       saveEssayData(updatedData);
     }, 1000);
-  };
+  }, []);
 
-  const updateTitle = (newTitle: string) => {
+  const updateTitle = useCallback((newTitle: string) => {
     if (!essayData || !newTitle.trim()) return;
     
     const updatedData = {
@@ -55,9 +55,9 @@ const UnifiedEditor = () => {
     };
     setEssayData(updatedData);
     autoSave(updatedData);
-  };
+  }, [essayData, autoSave]);
 
-  const addTopicQuestion = (topic: string) => {
+  const addTopicQuestion = useCallback((topic: string) => {
     if (!essayData) return;
     
     const updatedData = {
@@ -70,9 +70,9 @@ const UnifiedEditor = () => {
     if (editorState === 'initial') {
       setEditorState('outline');
     }
-  };
+  }, [essayData, autoSave, editorState]);
 
-  const addFirstSentence = (topicIndex: number, sentence: string) => {
+  const addFirstSentence = useCallback((topicIndex: number, sentence: string) => {
     if (!essayData) return;
     
     const updatedSentences = { ...essayData.sentences };
@@ -84,9 +84,9 @@ const UnifiedEditor = () => {
     const updatedData = { ...essayData, sentences: updatedSentences };
     setEssayData(updatedData);
     autoSave(updatedData);
-  };
+  }, [essayData, autoSave]);
 
-  const updateParagraph = (content: string) => {
+  const updateParagraph = useCallback((content: string) => {
     if (!essayData || selectedTopicIndex === null || selectedSentenceIndex === null) return;
     
     const updatedParagraphs = { ...essayData.paragraphs };
@@ -98,9 +98,9 @@ const UnifiedEditor = () => {
     const updatedData = { ...essayData, paragraphs: updatedParagraphs };
     setEssayData(updatedData);
     autoSave(updatedData);
-  };
+  }, [essayData, selectedTopicIndex, selectedSentenceIndex, autoSave]);
 
-  const editTopic = (topicIndex: number, newTopic: string) => {
+  const editTopic = useCallback((topicIndex: number, newTopic: string) => {
     if (!essayData) return;
     
     const updatedTopics = [...essayData.topics];
@@ -109,9 +109,9 @@ const UnifiedEditor = () => {
     const updatedData = { ...essayData, topics: updatedTopics };
     setEssayData(updatedData);
     autoSave(updatedData);
-  };
+  }, [essayData, autoSave]);
 
-  const editSentence = (topicIndex: number, sentenceIndex: number, newSentence: string) => {
+  const editSentence = useCallback((topicIndex: number, sentenceIndex: number, newSentence: string) => {
     if (!essayData) return;
     
     const updatedSentences = { ...essayData.sentences };
@@ -122,7 +122,7 @@ const UnifiedEditor = () => {
     const updatedData = { ...essayData, sentences: updatedSentences };
     setEssayData(updatedData);
     autoSave(updatedData);
-  };
+  }, [essayData, autoSave]);
 
   const handleSentenceClick = (topicIndex: number, sentenceIndex: number) => {
     setSelectedTopicIndex(topicIndex);
@@ -140,15 +140,16 @@ const UnifiedEditor = () => {
     return "";
   };
 
-  const getCurrentFirstSentence = () => {
-    if (!essayData || selectedTopicIndex === null || selectedSentenceIndex === null) return "";
-    
-    const sentences = essayData.sentences[selectedTopicIndex];
-    if (Array.isArray(sentences) && sentences[selectedSentenceIndex]) {
-      return sentences[selectedSentenceIndex];
-    }
-    return "";
-  };
+  const onReorderTopics = useCallback((startIndex: number, endIndex: number) => {
+    if (!essayData) return;
+    const result = Array.from(essayData.topics);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+
+    const updatedData = { ...essayData, topics: result };
+    setEssayData(updatedData);
+    autoSave(updatedData);
+  }, [essayData, autoSave]);
 
   if (!essayData) return null;
 
@@ -172,6 +173,7 @@ const UnifiedEditor = () => {
             onSentenceClick={handleSentenceClick}
             onEditTopic={editTopic}
             onEditSentence={editSentence}
+            onReorderTopics={onReorderTopics}
           />
         )}
 
