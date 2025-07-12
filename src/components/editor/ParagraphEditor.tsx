@@ -1,8 +1,14 @@
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AICoach } from "@/components/AICoach";
 import { Wand2 } from "lucide-react";
+
+interface SelectionInfo {
+  text: string;
+  x: number;
+  y: number;
+}
 
 interface ParagraphEditorProps {
   firstSentence: string;
@@ -18,62 +24,48 @@ export const ParagraphEditor = ({
   onFirstSentenceChange 
 }: ParagraphEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [aiCoachText, setAiCoachText] = useState<string | null>(null);
-  const [aiCoachPosition, setAiCoachPosition] = useState({ x: 0, y: 0 });
+  const [selectionInfo, setSelectionInfo] = useState<SelectionInfo | null>(null);
+  const [showAICoach, setShowAICoach] = useState(false);
 
   const handleInput = () => {
-    if (editorRef.current) {
-      const firstSentenceEl = editorRef.current.querySelector('.first-sentence');
-      const currentFullText = editorRef.current.innerText;
-      
-      let newFirstSentence = '';
-      let newParagraphContent = '';
+    if (!editorRef.current) return;
+    const { innerText } = editorRef.current;
+    const firstSentenceEndIndex = innerText.indexOf(firstSentence) + firstSentence.length;
+    const newParagraph = innerText.substring(firstSentenceEndIndex).trim();
 
-      if (firstSentenceEl && firstSentenceEl.textContent) {
-        newFirstSentence = firstSentenceEl.textContent;
-        newParagraphContent = currentFullText.substring(newFirstSentence.length).trim();
-      } else {
-        // Fallback if span is removed or empty
-        const firstSentenceBoundary = currentFullText.indexOf('.') + 1;
-        if (firstSentenceBoundary > 0) {
-          newFirstSentence = currentFullText.substring(0, firstSentenceBoundary);
-          newParagraphContent = currentFullText.substring(firstSentenceBoundary).trim();
-        } else {
-          newFirstSentence = currentFullText;
-        }
-      }
-
-      if (newFirstSentence !== firstSentence) {
-        onFirstSentenceChange(newFirstSentence);
-      }
-      if (newParagraphContent !== paragraphContent) {
-        onContentChange(newParagraphContent);
-      }
+    if (newParagraph !== paragraphContent) {
+      onContentChange(newParagraph);
     }
+    // First sentence editing is implicitly handled by the parent state
   };
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
-    if (!selection || selection.toString().trim().length <= 10) {
-      setAiCoachText(null);
-      return;
+    if (selection && selection.toString().trim().length > 10) {
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      const editorRect = editorRef.current?.getBoundingClientRect();
+      if (!editorRect) return;
+
+      setSelectionInfo({
+        text: selection.toString().trim(),
+        x: rect.right + 5, // Position to the right of selection
+        y: rect.top - editorRect.top + rect.height / 2, // Center vertically
+      });
+      setShowAICoach(false); // Hide full coach on new selection
+    } else {
+      setSelectionInfo(null);
+      setShowAICoach(false);
     }
-
-    const selectedText = selection.toString().trim();
-    setAiCoachText(selectedText);
-
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    setAiCoachPosition({ x: rect.right, y: rect.top });
   };
 
-  const handleAICoachButtonClick = () => {
-    if (!editorRef.current) return;
-    const fullText = editorRef.current.innerText;
-    setAiCoachText(fullText);
+  const handleWandClick = () => {
+    setShowAICoach(true);
+  };
 
-    const rect = editorRef.current.getBoundingClientRect();
-    setAiCoachPosition({ x: rect.right, y: rect.top });
+  const closeAICoach = () => {
+    setShowAICoach(false);
+    setSelectionInfo(null);
   };
 
   const fullParagraphText = `${firstSentence} ${paragraphContent}`.trim();
@@ -91,15 +83,6 @@ export const ParagraphEditor = ({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">Develop Your Paragraph</h3>
-          <Button
-            onClick={handleAICoachButtonClick}
-            variant="outline"
-            size="sm"
-            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-          >
-            <Wand2 className="w-4 h-4 mr-2" />
-            AI Coach
-          </Button>
         </div>
         
         <div className="relative">
@@ -115,17 +98,29 @@ export const ParagraphEditor = ({
             {paragraphContent}
           </div>
           
-          {aiCoachText && (
+          {selectionInfo && !showAICoach && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleWandClick}
+              className="absolute z-10 h-8 w-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+              style={{ top: `${selectionInfo.y - 16}px`, left: `${selectionInfo.x}px` }}
+            >
+              <Wand2 className="h-4 w-4" />
+            </Button>
+          )}
+
+          {selectionInfo && showAICoach && (
             <div 
-              className="fixed z-50"
-              style={{
-                top: `${aiCoachPosition.y}px`,
-                left: `${aiCoachPosition.x - 330}px`
+              className="absolute z-20"
+              style={{ 
+                top: `${selectionInfo.y - 20}px`, 
+                left: `${selectionInfo.x + 40}px` 
               }}
             >
               <AICoach
-                selectedText={aiCoachText}
-                onClose={() => setAiCoachText(null)}
+                selectedText={selectionInfo.text}
+                onClose={closeAICoach}
               />
             </div>
           )}
