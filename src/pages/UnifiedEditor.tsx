@@ -140,6 +140,16 @@ const UnifiedEditor = () => {
     return "";
   };
 
+  const getCurrentFirstSentence = () => {
+    if (!essayData || selectedTopicIndex === null || selectedSentenceIndex === null) return "";
+    
+    const sentences = essayData.sentences[selectedTopicIndex];
+    if (Array.isArray(sentences) && sentences[selectedSentenceIndex]) {
+      return sentences[selectedSentenceIndex];
+    }
+    return "";
+  };
+
   const onReorderTopics = useCallback((startIndex: number, endIndex: number) => {
     if (!essayData) return;
     const result = Array.from(essayData.topics);
