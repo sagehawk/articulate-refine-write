@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wand2, Loader, X } from "lucide-react";
@@ -13,15 +13,11 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState("");
 
-  useEffect(() => {
-    getSuggestion();
-  }, [selectedText]);
-
   const getSuggestion = async () => {
     if (!selectedText.trim()) return;
     
     setIsLoading(true);
-    setSuggestion("");
+    setSuggestion(""); // Clear previous suggestion
     try {
       const response = await fetch('/api/aiSuggestions', {
         method: 'POST',
@@ -70,16 +66,26 @@ export const AICoach = ({ selectedText, onClose }: AICoachProps) => {
           </Button>
         </div>
         
-        {isLoading ? (
-          <div className="flex items-center gap-2 text-sm min-h-[60px]">
-            <Loader className="h-4 w-4 animate-spin" />
-            Analyzing your text...
-          </div>
-        ) : suggestion ? (
-          <div className="text-sm text-foreground leading-relaxed min-h-[60px]">
-            {suggestion}
-          </div>
-        ) : null}
+        <div className="min-h-[80px] flex flex-col justify-center">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm">
+              <Loader className="h-4 w-4 animate-spin" />
+              Analyzing your text...
+            </div>
+          ) : suggestion ? (
+            <div className="text-sm text-foreground leading-relaxed">
+              {suggestion}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-3">Get feedback on your writing.</p>
+              <Button onClick={getSuggestion} size="sm" className="w-full">
+                <Wand2 className="h-4 w-4 mr-2" />
+                Analyze Selection
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
