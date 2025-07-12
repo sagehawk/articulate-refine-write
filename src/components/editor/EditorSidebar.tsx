@@ -103,6 +103,26 @@ export const EditorSidebar = ({
     onReorderTopics(result.source.index, result.destination.index);
   };
 
+  const toggleTopicInput = () => {
+    setShowTopicInput(!showTopicInput);
+    if (!showTopicInput) {
+      setTimeout(() => {
+        const input = document.getElementById('topic-input');
+        if (input) input.focus();
+      }, 100);
+    }
+  };
+
+  const toggleTopicInput = () => {
+    setShowTopicInput(!showTopicInput);
+    if (!showTopicInput) {
+      setTimeout(() => {
+        const input = document.getElementById('topic-input');
+        if (input) input.focus();
+      }, 100);
+    }
+  };
+
   return (
     <div className="w-full lg:w-80 bg-card border-r border-border flex flex-col lg:min-h-0">
       <div className="p-4 sm:p-6 border-b border-border">
@@ -312,7 +332,7 @@ export const EditorSidebar = ({
           </div>
         ) : (
           <Button
-            onClick={toggleTopicInput}
+            onClick={() => setShowTopicInput(true)}
             variant="ghost"
             className="w-full justify-start text-muted-foreground hover:text-primary hover:bg-primary/5"
           >
