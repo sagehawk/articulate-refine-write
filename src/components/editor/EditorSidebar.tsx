@@ -103,25 +103,9 @@ export const EditorSidebar = ({
     onReorderTopics(result.source.index, result.destination.index);
   };
 
-  const toggleTopicInput = () => {
-    setShowTopicInput(!showTopicInput);
-    if (!showTopicInput) {
-      setTimeout(() => {
-        const input = document.getElementById('topic-input');
-        if (input) input.focus();
-      }, 100);
-    }
-  };
 
-  const toggleTopicInput = () => {
-    setShowTopicInput(!showTopicInput);
-    if (!showTopicInput) {
-      setTimeout(() => {
-        const input = document.getElementById('topic-input');
-        if (input) input.focus();
-      }, 100);
-    }
-  };
+
+
 
   return (
     <div className="w-full lg:w-80 bg-card border-r border-border flex flex-col lg:min-h-0">
