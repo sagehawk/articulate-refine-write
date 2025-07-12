@@ -17,26 +17,79 @@ interface ParagraphEditorProps {
   onFirstSentenceChange: (newSentence: string) => void;
 }
 
-export const ParagraphEditor = memo(({ 
-  firstSentence, 
-  paragraphContent, 
-  onContentChange, 
-  onFirstSentenceChange 
+import { useRef, useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { AICoach } from "@/components/AICoach";
+import { Wand2 } from "lucide-react";
+
+interface SelectionInfo {
+  text: string;
+  x: number;
+  y: number;
+}
+
+interface ParagraphEditorProps {
+  firstSentence: string;
+  paragraphContent: string;
+  onContentChange: (content: string) => void;
+  onFirstSentenceChange: (newSentence: string) => void;
+}
+
+export const ParagraphEditor = ({
+  firstSentence,
+  paragraphContent,
+  onContentChange,
+  onFirstSentenceChange
 }: ParagraphEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const [selectionInfo, setSelectionInfo] = useState<SelectionInfo | null>(null);
   const [showAICoach, setShowAICoach] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Use a ref to store the current content to avoid re-renders
+  const currentContentRef = useRef<string>("");
+
+  useEffect(() => {
+    // Initialize contentEditable div content when component mounts or props change
+    // Only update if not focused to avoid disrupting user input
+    if (editorRef.current && !isFocused) {
+      const combinedContent = `<span class="first-sentence font-bold text-primary">${firstSentence}</span> ${paragraphContent}`;
+      editorRef.current.innerHTML = combinedContent;
+      currentContentRef.current = editorRef.current.innerText; // Store the initial text
+    }
+  }, [firstSentence, paragraphContent, isFocused]);
 
   const handleInput = () => {
-    if (!editorRef.current) return;
-    const { innerText } = editorRef.current;
-    const firstSentenceEndIndex = innerText.indexOf(firstSentence) + firstSentence.length;
-    const newParagraph = innerText.substring(firstSentenceEndIndex).trim();
-
-    if (newParagraph !== paragraphContent) {
-      onContentChange(newParagraph);
+    if (editorRef.current) {
+      currentContentRef.current = editorRef.current.innerText;
     }
-    // First sentence editing is implicitly handled by the parent state
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (!editorRef.current) return;
+
+    const fullText = editorRef.current.innerText;
+
+    // Parse first sentence and paragraph content based on lines
+    const lines = fullText.split('\n');
+    let newFirstSentence = lines[0] || '';
+    let newParagraphContent = lines.slice(1).join('\n') || '';
+
+    // Trim to remove leading/trailing whitespace
+    newFirstSentence = newFirstSentence.trim();
+    newParagraphContent = newParagraphContent.trim();
+
+    if (newFirstSentence !== firstSentence) {
+      onFirstSentenceChange(newFirstSentence);
+    }
+    if (newParagraphContent !== paragraphContent) {
+      onContentChange(newParagraphContent);
+    }
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
   };
 
   const handleTextSelection = () => {
@@ -49,10 +102,10 @@ export const ParagraphEditor = memo(({
 
       setSelectionInfo({
         text: selection.toString().trim(),
-        x: rect.right + 5, // Position to the right of selection
-        y: rect.top - editorRect.top + rect.height / 2, // Center vertically
+        x: rect.right + 5,
+        y: rect.top - editorRect.top + rect.height / 2,
       });
-      setShowAICoach(false); // Hide full coach on new selection
+      setShowAICoach(false);
     } else {
       setSelectionInfo(null);
       setShowAICoach(false);
@@ -68,11 +121,10 @@ export const ParagraphEditor = memo(({
     setSelectionInfo(null);
   };
 
-  const fullParagraphText = `${firstSentence} ${paragraphContent}`.trim();
+  const fullParagraphTextForWordCount = currentContentRef.current;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* ... (header and other sections remain the same) ... */}
       <div className="text-center space-y-6">
         <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Write Your Paragraph</h1>
         <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -84,20 +136,21 @@ export const ParagraphEditor = memo(({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground">Develop Your Paragraph</h3>
         </div>
-        
+
         <div className="relative">
           <div
             ref={editorRef}
             contentEditable
             onInput={handleInput}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             onMouseUp={handleTextSelection}
             suppressContentEditableWarning={true}
             className="min-h-[400px] sm:min-h-[500px] text-lg sm:text-xl font-lora leading-relaxed resize-none border-2 focus:border-primary p-6 bg-background focus:outline-none"
           >
-            <span className="first-sentence font-bold text-primary">{firstSentence}</span>{' '}
-            {paragraphContent}
+            {/* Content is managed by useEffect and browser */}
           </div>
-          
+
           {selectionInfo && !showAICoach && (
             <Button
               variant="outline"
@@ -111,11 +164,11 @@ export const ParagraphEditor = memo(({
           )}
 
           {selectionInfo && showAICoach && (
-            <div 
+            <div
               className="absolute z-20"
-              style={{ 
-                top: `${selectionInfo.y - 20}px`, 
-                left: `${selectionInfo.x + 40}px` 
+              style={{
+                top: `${selectionInfo.y - 20}px`,
+                left: `${selectionInfo.x + 40}px`
               }}
             >
               <AICoach
@@ -125,11 +178,11 @@ export const ParagraphEditor = memo(({
             </div>
           )}
         </div>
-        
+
         <div className="text-sm text-muted-foreground text-center">
-          {fullParagraphText.split(/\s+/).filter(Boolean).length} words
+          {fullParagraphTextForWordCount.split(/\s+/).filter(Boolean).length} words
         </div>
       </div>
     </div>
   );
-});
+};
