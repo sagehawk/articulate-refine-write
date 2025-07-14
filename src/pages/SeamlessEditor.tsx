@@ -12,6 +12,7 @@ const SeamlessEditor = () => {
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null);
   const [hoveredParagraphId, setHoveredParagraphId] = useState<string | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   useEffect(() => {
     const activeEssayId = getActiveEssay();
@@ -72,7 +73,7 @@ const SeamlessEditor = () => {
     autoSave(newParagraphs);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, id: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const currentParagraphIndex = paragraphs.findIndex((p) => p.id === id);
@@ -121,24 +122,21 @@ const SeamlessEditor = () => {
     };
   };
 
-  const renderParagraphContent = (content: string | undefined) => {
-    if (typeof content !== 'string') {
-      return <div className="w-full h-full text-lg leading-relaxed"></div>;
-    }
-    const firstSentenceMatch = content.match(/([^.]+\.\s)/);
+  const renderHighlightedContent = (content: string) => {
+    if (typeof content !== 'string') return null;
+
+    const firstSentenceMatch = content.match(/^([^.]+\.\s)/);
     if (firstSentenceMatch) {
       const firstSentence = firstSentenceMatch[1];
       const restOfParagraph = content.substring(firstSentence.length);
       return (
-        <div
-          className="w-full h-full text-lg leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html: `<span style="color: #22c55e;">${firstSentence}</span>${restOfParagraph}`,
-          }}
-        />
+        <>
+          <span style={{ color: "#22c55e" }}>{firstSentence}</span>
+          {restOfParagraph}
+        </>
       );
     }
-    return <div className="w-full h-full text-lg leading-relaxed">{content}</div>;
+    return content;
   };
 
   const activeParagraph = paragraphs.find((p) => p.id === activeParagraphId);
@@ -182,21 +180,39 @@ const SeamlessEditor = () => {
         </div>
         <div className="space-y-4 flex-grow">
           {paragraphs.map((p) => (
-            <div key={p.id} className="relative">
+            <div
+              key={p.id}
+              className="relative"
+              onMouseOver={() => setHoveredParagraphId(p.id)}
+              onMouseOut={() => setHoveredParagraphId(null)}
+            >
               <div
-                contentEditable
-                onBlur={(e) => handleContentChange(p.id, e.currentTarget.innerText)}
+                className={`absolute inset-0 p-4 text-lg leading-relaxed pointer-events-none transition-opacity duration-300
+                  ${activeParagraphId !== p.id && hoveredParagraphId !== p.id ? "opacity-30" : "opacity-100"}
+                `}
+                aria-hidden="true"
+              >
+                {renderHighlightedContent(p.content)}
+              </div>
+              <textarea
+                ref={(el) => (textareaRefs.current[p.id] = el)}
+                value={p.content}
+                onChange={(e) => handleContentChange(p.id, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, p.id)}
                 onFocus={() => setActiveParagraphId(p.id)}
-                onMouseOver={() => setHoveredParagraphId(p.id)}
-                onMouseOut={() => setHoveredParagraphId(null)}
-                className={`w-full p-4 rounded-md bg-card border border-transparent focus:outline-none focus:border-primary transition-opacity duration-300
+                className={`w-full p-4 rounded-md bg-transparent border border-transparent focus:outline-none focus:border-primary text-lg leading-relaxed resize-none
+                  text-transparent caret-white transition-opacity duration-300
                   ${activeParagraphId !== p.id && hoveredParagraphId !== p.id ? "opacity-30" : "opacity-100"}
                 `}
                 style={{ minHeight: "150px" }}
-              >
-                {renderParagraphContent(p.content)}
-              </div>
+                onScroll={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  const overlay = target.previousSibling as HTMLDivElement;
+                  if (overlay) {
+                    overlay.scrollTop = target.scrollTop;
+                  }
+                }}
+              />
             </div>
           ))}
         </div>
