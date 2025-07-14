@@ -139,6 +139,15 @@ const SeamlessEditor = () => {
     return content;
   };
 
+  useEffect(() => {
+    if (activeParagraphId) {
+      const activeTextarea = textareaRefs.current[activeParagraphId];
+      if (activeTextarea) {
+        activeTextarea.focus();
+      }
+    }
+  }, [activeParagraphId]);
+
   const activeParagraph = paragraphs.find((p) => p.id === activeParagraphId);
   const instruction = activeParagraph ? getInstruction(activeParagraph.content) : { title: "", subtitle: "" };
 
