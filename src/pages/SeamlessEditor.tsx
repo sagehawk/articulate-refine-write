@@ -121,7 +121,10 @@ const SeamlessEditor = () => {
     };
   };
 
-  const renderParagraphContent = (content: string) => {
+  const renderParagraphContent = (content: string | undefined) => {
+    if (typeof content !== 'string') {
+      return <div className="w-full h-full text-lg leading-relaxed"></div>;
+    }
     const firstSentenceMatch = content.match(/([^.]+\.\s)/);
     if (firstSentenceMatch) {
       const firstSentence = firstSentenceMatch[1];
