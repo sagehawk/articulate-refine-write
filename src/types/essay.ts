@@ -75,21 +75,22 @@ export interface Step9Data {
   };
 }
 
+export interface Topic {
+  id: string;
+  title: string;
+  order: number;
+}
+
+export interface Paragraph {
+  id: string;
+  topicId: string;
+  content: string;
+  order: number;
+}
+
 export interface EssayData {
   essay: Essay;
-  topics: string[];
-  sentences: {[key: number]: string[]};
-  paragraphs: {[key: number]: string[]};
-  refinedSentences: {[key: number]: string[]};
-  reorderedParagraphs: number[];
-  bibliography: string;
-  step1?: Step1Data;
-  step2?: Step2Data;
-  step3?: Step3Data;
-  step4?: Step4Data;
-  step5?: Step5Data;
-  step6?: Step6Data;
-  step7?: Step7Data;
-  step8?: Step8Data;
-  step9?: Step9Data;
+  topics: { [key: string]: Topic };
+  paragraphs: { [key: string]: Paragraph };
+  // ... (rest of the interface)
 }
