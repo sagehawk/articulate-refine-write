@@ -187,7 +187,7 @@ const SeamlessEditor = () => {
           <h1 className="text-3xl font-bold mb-2">{instruction.title}</h1>
           <p className="text-muted-foreground">{instruction.subtitle}</p>
         </div>
-        <div className="space-y-4 flex-grow">
+        <div className="space-y-4 flex-grow text-left">
           {paragraphs.map((p) => (
             <div
               key={p.id}
