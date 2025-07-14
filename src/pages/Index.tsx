@@ -17,12 +17,12 @@ const Index = () => {
 
   const handleStartNewEssay = () => {
     createNewEssay("Untitled Essay");
-    navigate("/editor");
+    navigate("/seamless-editor");
   };
 
   const handleOpenEssay = (essayId: string) => {
     localStorage.setItem('activeEssayId', essayId);
-    navigate("/editor");
+    navigate("/seamless-editor");
   };
 
   const formatDate = (dateString: string) => {

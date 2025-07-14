@@ -1,7 +1,7 @@
 
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import UnifiedEditor from "./pages/UnifiedEditor";
+import SeamlessEditor from "./pages/SeamlessEditor";
 import Analysis from "./pages/Analysis";
 import Library from "./pages/Library";
 import NotFound from "./pages/NotFound";
@@ -14,7 +14,7 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="essay-architect-theme">
       <Routes>
         <Route path="/" element={<Index />} />
-        <Route path="/editor" element={<UnifiedEditor />} />
+        <Route path="/seamless-editor" element={<SeamlessEditor />} />
         <Route path="/analysis" element={<Analysis />} />
         <Route path="/library" element={<Library />} />
         <Route path="*" element={<NotFound />} />
