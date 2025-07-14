@@ -108,8 +108,8 @@ const SeamlessEditor = () => {
     autoSave(updatedParagraphs);
   };
 
-  const getInstruction = (content: string) => {
-    if (!content.includes(". ")) {
+  const getInstruction = (content: string | undefined) => {
+    if (!content || !content.includes(". ")) {
       return {
         title: "Write the first sentence",
         subtitle: "This will be the main point of your paragraph.",
